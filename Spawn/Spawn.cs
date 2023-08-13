@@ -68,7 +68,7 @@ public class Spawn : Mod
 
 		if (item.m_Info.m_CanBeAddedToInventory)
 		{
-			Debug.Log("Spawning \"" + itemIdString + "\" in inventory - x" + args[1]);
+			Debug.Log("Spawning \"" + itemIdString + "\" in inventory");
 			for (var i = 0; i < quantity; i++)
 			{
 				if (item == null) {

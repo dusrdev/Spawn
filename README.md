@@ -16,3 +16,7 @@ It works with the latest updates
 **spawn [id] [quantity]** - spawn multiple instances of the item with the [id]
 
 * Fixed bug where each help request would append to the previous file instead of overwriting
+
+## v1.1.1
+
+* Fixed bug where outputting text would cause an exception if quantity parameter is not provided. Now it will properly default to 1 if quantity is omitted
