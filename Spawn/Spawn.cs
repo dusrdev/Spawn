@@ -1,4 +1,5 @@
-﻿using System;
+﻿using System.Text;
+using System;
 using System.IO;
 using UnityEngine;
 
@@ -17,7 +18,7 @@ public class Spawn : Mod
 			var desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
 			var path = Path.Combine(desktopPath, "itemIds.txt");
 			var itemIds = Enum.GetNames(typeof(Enums.ItemID));
-			File.AppendAllLines(path, itemIds);
+			File.WriteAllLines(path, itemIds);
 			Debug.Log("ItemIds exported to: " + path);
 		}
 		catch (Exception e)
@@ -27,7 +28,7 @@ public class Spawn : Mod
 	}
 
 
-	[ConsoleCommand("spawn", "spawn <ItemID enum name or value>")]
+	[ConsoleCommand("spawn", "spawn [ItemID enum name or value] [Quantity, default=1]")]
 	public static void Command(string[] args)
 	{
 		if (args.Length == 0)
@@ -50,6 +51,14 @@ public class Spawn : Mod
 			return;
 		}
 
+		var quantity = 1;
+
+		if (args.Length > 1 && !int.TryParse(args[1], out quantity))
+		{
+			Debug.Log("Invalid amount: " + args[1]);
+			return;
+		}
+
 		Item item = ItemsManager.Get().CreateItem(itemIdString, false);
 
 		if (item == null)
@@ -59,8 +68,15 @@ public class Spawn : Mod
 
 		if (item.m_Info.m_CanBeAddedToInventory)
 		{
-			Debug.Log("Spawning in inventory: " + itemIdString);
-			InventoryBackpack.Get().InsertItem(item, null, null, true, true, true, true, true);
+			Debug.Log("Spawning \"" + itemIdString + "\" in inventory - x" + args[1]);
+			for (var i = 0; i < quantity; i++)
+			{
+				if (item == null) {
+					item = ItemsManager.Get().CreateItem(itemIdString, false);
+				}
+				InventoryBackpack.Get().InsertItem(item, null, null, true, true, true, true, true);
+				item = null;
+			}
 			return;
 		}
 		Debug.Log("Spawning at player: " + itemIdString);
