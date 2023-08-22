@@ -40,3 +40,10 @@ Spawned an item that can't be used, moved or destroyed? you are no longer stuck 
 **spawn log** - will activate secondary log location, in addition to the debug console, everything will be logged to a file name "SpawnLog.txt" on the desktop.
 
 * This is essentially a switch, you call it once, it will activate, call again to deactivate and so on. While it is on, it will continue logging to the file on the desktop until turned off / mod unloaded / game exited
+
+## v1.3
+
+* Restructured some code to improve performance
+* ItemId parsing for spawning items will now be more stable and **ignore case**
+* Log file will now be of type `.log` to fit its purpose more appropriately
+* Improved logging
