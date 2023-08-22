@@ -4,9 +4,12 @@ using System.Text;
 using System;
 using System.IO;
 using UnityEngine;
+using System.Reflection;
 
 public class Spawn : Mod
 {
+	private const string SpecialFeaturesHelp = "Special Commands:\n\nlog - turn on logging to desktop file\nunlockNotepad - unlocks the whole notepad\n\nSpecial Weapons:\n\nFirst_Blade - spawns the First Blade\nLucifers_Spear - spawns Lucifer's Spear\n\n";
+
 	public void Start()
 	{
 		Debug.Log("Mod Spawn has been loaded!");
@@ -14,15 +17,17 @@ public class Spawn : Mod
 
 	private static readonly string DesktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
 
-	// Exports the item ids to a text file on the desktop
+	// Exports the help to a text file on the desktop
 	private static void ExportItemIds()
 	{
 		try
 		{
-			var path = Path.Combine(DesktopPath, "itemIds.txt");
+			var path = Path.Combine(DesktopPath, "SpawnHelp.txt");
+			File.WriteAllText(path, SpecialFeaturesHelp);
+			File.AppendAllText(path, "ItemIds:\n\n");
 			var itemIds = Enum.GetNames(typeof(Enums.ItemID));
-			File.WriteAllLines(path, itemIds);
-			Log(string.Format("ItemIds exported to: {0}", path));
+			File.AppendAllLines(path, itemIds);
+			Log(string.Format("help exported to: {0}", path));
 		}
 		catch (Exception e)
 		{
@@ -31,9 +36,15 @@ public class Spawn : Mod
 	}
 
 	// parses the item id from the string, disregards case, and verifies result is defined
-	private static bool ParseItemId(string arg, out Enums.ItemID itemId)
+	private static bool ParseEnum<T>(string arg, out T @enum) where T : struct, Enum
 	{
-		return Enum.TryParse(arg, true, out itemId) && Enum.IsDefined(typeof(Enums.ItemID), itemId);
+		return Enum.TryParse(arg, true, out @enum) && Enum.IsDefined(typeof(T), @enum);
+	}
+
+	// compares two strings disregarding case
+	private static bool Equals(string a, string b)
+	{
+		return string.Compare(a, b, true) == 0;
 	}
 
 
@@ -45,15 +56,27 @@ public class Spawn : Mod
 			return;
 		}
 
-		if (args[0] == "help")
+		if (Equals(args[0], "Help"))
 		{
 			ExportItemIds();
 			return;
 		}
 
-		if (args[0] == "log")
+		if (Equals(args[0], "Log"))
 		{
 			_logToDesktop = !_logToDesktop;
+			return;
+		}
+
+		if (Equals(args[0], "UnlockNotepad"))
+		{
+			UnlockNotepad();
+			return;
+		}
+
+		if (WeaponMap.TryGetValue(args[0], out Enums.ItemID weapon))
+		{
+			SpawnSpecialWeapon(args[0], weapon);
 			return;
 		}
 
@@ -64,7 +87,7 @@ public class Spawn : Mod
 		}
 
 		var segment = new ArraySegment<string>(args);
-		if (segment.Count > 1 && args[1] == "rm")
+		if (segment.Count > 1 && Equals(args[1], "rm"))
 		{
 			RemoveItem(segment);
 		}
@@ -76,7 +99,7 @@ public class Spawn : Mod
 
 	private static void SpawnItem(ArraySegment<string> args)
 	{
-		if (!ParseItemId(args[0], out Enums.ItemID itemId))
+		if (!ParseEnum(args[0], out Enums.ItemID itemId))
 		{
 			Log(string.Format("ItemId `{0}` does not exist, refer to \"spawn help\"", args[0]));
 			return;
@@ -99,8 +122,8 @@ public class Spawn : Mod
 			var backpack = InventoryBackpack.Get();
 			for (var i = 0; i < quantity; i++)
 			{
-				var item = manager.CreateItem(itemId, false);
-				backpack.InsertItem(item, null, null, true, true, true, true, true);
+				var itemInstance = manager.CreateItem(itemId, false);
+				backpack.InsertItem(itemInstance, null, null, true, true, true, true, true);
 			}
 			return;
 		}
@@ -115,7 +138,7 @@ public class Spawn : Mod
 
 	public static void RemoveItem(ArraySegment<string> args)
 	{
-		if (!ParseItemId(args[0], out Enums.ItemID itemId))
+		if (!ParseEnum(args[0], out Enums.ItemID itemId))
 		{
 			Log(string.Format("ItemId `{0}` does not exist, refer to \"spawn help\"", args[0]));
 			return;
@@ -126,7 +149,7 @@ public class Spawn : Mod
 
 		if (args.Count > 2)
 		{
-			if (args[2] == "debug")
+			if (Equals(args[2], "debug"))
 			{
 				debug = true;
 			}
@@ -212,9 +235,57 @@ public class Spawn : Mod
 		}
 	}
 
+	// Unlocks the whole notepad
+	public static void UnlockNotepad()
+	{
+		var manager = ItemsManager.Get();
+		manager.UnlockWholeNotepad();
+		Log("Notepad unlocked!");
+	}
+
+	// Spawns Special Weapons - Infinite Damage and Durability
+	public static void SpawnSpecialWeapon(string weaponName, Enums.ItemID itemId)
+	{
+		Log(string.Format("Spawning \"{0}\".", weaponName));
+		var manager = ItemsManager.Get();
+		var item = manager.CreateItem(itemId, false);
+		var backpack = InventoryBackpack.Get();
+		backpack.InsertItem(item, null, null, true, true, true, true, true);
+		var itemInfo = (WeaponInfo)item.m_Info;
+		itemInfo.m_DamageSelf = 1E-45f; // Smallest number that is greater than 0
+		itemInfo.m_HealthLossPerSec = 0f;
+		itemInfo.m_DefaultDamage = float.MaxValue;
+		itemInfo.m_HumanDamage = float.MaxValue;
+		itemInfo.m_AnimalDamage = float.MaxValue;
+		itemInfo.m_PlantDamage = float.MaxValue;
+		itemInfo.m_TreeDamage = float.MaxValue;
+		itemInfo.m_IronVeinDamage = float.MaxValue;
+		itemInfo.m_ThrowDamage = float.MaxValue;
+	}
+
 	private static readonly string _logPath = Path.Combine(DesktopPath, "SpawnLog.log");
 
 	private static bool _logToDesktop = false;
+
+	// private static string GetProps(object obj)
+	// {
+	// 	var props = obj.GetType().GetProperties();
+	// 	var sb = new StringBuilder();
+	// 	sb.AppendLine();
+	// 	sb.AppendLine("Type: " + obj.GetType().Name);
+	// 	foreach (var prop in props)
+	// 	{
+	// 		var value = prop.GetValue(obj);
+	// 		if (value == null)
+	// 		{
+	// 			continue;
+	// 		}
+	// 		sb.Append(prop.Name)
+	// 		  .Append(": ")
+	// 		  .AppendLine(value.ToString());
+	// 	}
+	// 	return sb.ToString();
+	// }
 
 	public static void Log(string message)
 	{
@@ -232,4 +303,9 @@ public class Spawn : Mod
 	{
 		Log("Mod Spawn has been unloaded!");
 	}
+
+	private static readonly Dictionary<string, Enums.ItemID> WeaponMap = new Dictionary<string, Enums.ItemID>(StringComparer.OrdinalIgnoreCase) {
+		{ "First_Blade", Enums.ItemID.Obsidian_Bone_Blade },
+		{ "Lucifers_Spear", Enums.ItemID.Obsidian_Spear }
+	};
 }
