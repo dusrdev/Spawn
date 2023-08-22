@@ -22,12 +22,18 @@ public class Spawn : Mod
 			var path = Path.Combine(DesktopPath, "itemIds.txt");
 			var itemIds = Enum.GetNames(typeof(Enums.ItemID));
 			File.WriteAllLines(path, itemIds);
-			Log("ItemIds exported to: " + path);
+			Log(string.Format("ItemIds exported to: {0}", path));
 		}
 		catch (Exception e)
 		{
-			Log("Error while exporting item ids: " + e.Message);
+			Log(string.Format("Error while exporting item ids: `{0}`\nStackTrace: {1}", e.Message, e.StackTrace));
 		}
+	}
+
+	// parses the item id from the string, disregards case, and verifies result is defined
+	private static bool ParseItemId(string arg, out Enums.ItemID itemId)
+	{
+		return Enum.TryParse(arg, true, out itemId) && Enum.IsDefined(typeof(Enums.ItemID), itemId);
 	}
 
 
@@ -45,14 +51,15 @@ public class Spawn : Mod
 			return;
 		}
 
-		if (args[0] == "log") {
+		if (args[0] == "log")
+		{
 			_logToDesktop = !_logToDesktop;
 			return;
 		}
 
-		if (ItemsManager.Get().StringToItemID(args[0]) == -1)
+		if (string.IsNullOrWhiteSpace(args[0]))
 		{
-			Log("ItemID does not exist: " + args[0]);
+			Log("Empty ItemId is invalid!");
 			return;
 		}
 
@@ -69,32 +76,37 @@ public class Spawn : Mod
 
 	private static void SpawnItem(ArraySegment<string> args)
 	{
+		if (!ParseItemId(args[0], out Enums.ItemID itemId))
+		{
+			Log(string.Format("ItemId `{0}` does not exist, refer to \"spawn help\"", args[0]));
+			return;
+		}
+
 		var quantity = 1;
 
 		if (args.Count > 1 && !int.TryParse(args[1], out quantity))
 		{
-			Log("Invalid amount: " + args[1]);
+			Log(string.Format("Quantity `{0}` is invalid!", args[1]));
 			return;
 		}
 
-		var item = ItemsManager.Get().CreateItem(args[0], false);
+		var manager = ItemsManager.Get();
+		var itemInfo = manager.GetInfo(itemId);
 
-		if (item.m_Info.m_CanBeAddedToInventory)
+		if (itemInfo.m_CanBeAddedToInventory)
 		{
-			Log("Spawning \"" + args[0] + "\" in inventory");
+			Log(string.Format("Spawning {0} x `{1}` to backpack", quantity, itemId));
+			var backpack = InventoryBackpack.Get();
 			for (var i = 0; i < quantity; i++)
 			{
-				if (item == null)
-				{
-					item = ItemsManager.Get().CreateItem(args[0], false);
-				}
-				InventoryBackpack.Get().InsertItem(item, null, null, true, true, true, true, true);
-				item = null;
+				var item = manager.CreateItem(itemId, false);
+				backpack.InsertItem(item, null, null, true, true, true, true, true);
 			}
 			return;
 		}
 
-		Log("Spawning at player: " + args[0]);
+		Log(string.Format("Spawning at player: {0}", itemId));
+		var item = manager.CreateItem(itemId, false);
 		var playerTransform = Player.Get().transform;
 		item.transform.position = playerTransform.position;
 		item.transform.rotation = playerTransform.rotation;
@@ -103,8 +115,11 @@ public class Spawn : Mod
 
 	public static void RemoveItem(ArraySegment<string> args)
 	{
-		Enums.ItemID enumItemId;
-		Enum.TryParse(args[0], true, out enumItemId);
+		if (!ParseItemId(args[0], out Enums.ItemID itemId))
+		{
+			Log(string.Format("ItemId `{0}` does not exist, refer to \"spawn help\"", args[0]));
+			return;
+		}
 
 		float maxDistance = 5f;
 		bool debug = false;
@@ -115,10 +130,12 @@ public class Spawn : Mod
 			{
 				debug = true;
 			}
-			else {
+			else
+			{
 				var isValid = float.TryParse(args[2], out maxDistance);
-				if (!isValid) {
-					Log("Invalid distance: " + args[2]);
+				if (!isValid)
+				{
+					Log(string.Format("Invalid distance: {0}", args[2]));
 					return;
 				}
 			}
@@ -129,7 +146,7 @@ public class Spawn : Mod
 
 		var sb = new StringBuilder();
 		sb.Append("ItemID: ")
-		  .AppendLine(enumItemId.ToString())
+		  .AppendLine(itemId.ToString())
 		  .Append("MaxDistance: ")
 		  .AppendLine(maxDistance.ToString())
 		  .Append("Debug: ")
@@ -139,10 +156,12 @@ public class Spawn : Mod
 		  .AppendLine(playerPosition.ToString())
 		  .AppendLine();
 
-		List<Item> items = new List<Item>();
+		var items = new Dictionary<int, Item>();
+		int index = 1;
+		Log(string.Format("Searching for {0} at distance {1}", itemId, maxDistance));
 		foreach (var item in Item.s_AllItems)
 		{
-			if (item.m_Info.m_ID != enumItemId)
+			if (item.m_Info.m_ID != itemId)
 			{
 				continue;
 			}
@@ -162,7 +181,14 @@ public class Spawn : Mod
 			{
 				continue;
 			}
-			items.Add(item);
+			Log(string.Format("Item {0} found at distance {1}", index, distance));
+			items[index] = item;
+			index++;
+		}
+
+		if (index == 1)
+		{
+			Log("No items found!");
 		}
 
 		if (debug)
@@ -171,18 +197,22 @@ public class Spawn : Mod
 			File.WriteAllText(path, sb.ToString());
 		}
 
+		index = 1;
+
 		while (!debug && items.Count > 0)
 		{
-			var item = items[0];
-			items.RemoveAt(0);
+			var item = items[index];
+			items.Remove(index);
 			item.m_Info.m_CanBeRemovedFromInventory = true;
 			item.m_Info.m_DestroyByItemsManager = true;
 			item.m_Info.m_CantDestroy = false;
 			ItemsManager.Get().AddItemToDestroy(item);
+			index++;
+			Log(string.Format("Item {0} removed!", index));
 		}
 	}
 
-	private static readonly string _logPath = Path.Combine(DesktopPath, "SpawnLog.txt");
+	private static readonly string _logPath = Path.Combine(DesktopPath, "SpawnLog.log");
 
 	private static bool _logToDesktop = false;
 
@@ -194,7 +224,7 @@ public class Spawn : Mod
 			return;
 		}
 		var time = DateTime.Now.ToString();
-		var output = string.Format("[{0}] {1}{2}", time, message, Environment.NewLine);
+		var output = string.Format("[{0}]: {1}\n", time, message);
 		File.AppendAllText(_logPath, output);
 	}
 
