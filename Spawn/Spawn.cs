@@ -30,6 +30,11 @@ public class Spawn : Mod
 	public void Start()
 	{
 		Debug.Log("Mod Spawn has been loaded!");
+		try {
+			RestoreSpecialItemProperties();
+		} catch {
+			Log("Couldn't restore item properties, ensure loading the mod after loading save, or use \"spawn restore\"");
+		}
 	}
 
 	private static readonly string DesktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
@@ -349,20 +354,49 @@ public class Spawn : Mod
 		Log(ItemAliasManager.AddNickname(args[1], itemId));
 	}
 
-	private static ItemInfo SpawnItemAndGetInfo(Enums.ItemID itemId)
+	// private static ItemInfo SpawnItemAndGetInfo(Enums.ItemID itemId)
+	// {
+	// 	Log(string.Format("Spawning modified \"{0}\".", itemId));
+	// 	var manager = ItemsManager.Get();
+	// 	var item = manager.CreateItem(itemId, false);
+	// 	var backpack = InventoryBackpack.Get();
+	// 	backpack.InsertItem(item, null, null, true, true, true, true, true);
+	// 	return item.m_Info;
+	// }
+
+	private static void RestoreSpecialItemProperties()
+	{
+		var backpack = InventoryBackpack.Get();
+
+		// foreach item in backpack
+
+		var itemInfo = item.m_Info;
+		if (m_Health <= 100f)
+		{ // Regular item
+			continue;
+		}
+		var type = m_Info.GetType();
+		if (m_Info.m_ID == Enums.ItemID.Stone)
+		{
+			ModifyItemProperties(type, itemInfo, false);
+			continue;
+		}
+		ModifyItemProperties(type, itemInfo);
+	}
+
+	private static void SpawnItemAndModify<T>(Enums.ItemID itemId, bool differentTypeIsError = true) where T : ItemInfo
 	{
 		Log(string.Format("Spawning modified \"{0}\".", itemId));
 		var manager = ItemsManager.Get();
 		var item = manager.CreateItem(itemId, false);
 		var backpack = InventoryBackpack.Get();
 		backpack.InsertItem(item, null, null, true, true, true, true, true);
-		return item.m_Info;
+		ModifyItemProperties(typeof(T), item.m_Info, differentTypeIsError);
 	}
 
-	// Spawns Supers Weapons - Infinite Damage and Durability
-	public static void SpawnSuperWeapon(Enums.ItemID itemId)
+	// Modifies weapons - Infinite Damage and Durability
+	public static void ModifyWeapon(WeaponInfo itemInfo)
 	{
-		var itemInfo = (WeaponInfo)SpawnItemAndGetInfo(itemId);
 		itemInfo.m_Mass = 0.1f;
 		itemInfo.m_DamageSelf = 1E-45f; // Smallest number that is greater than 0
 		itemInfo.m_HealthLossPerSec = 0f;
@@ -375,8 +409,8 @@ public class Spawn : Mod
 		itemInfo.m_ThrowDamage = float.MaxValue;
 	}
 
-	// Spawn a special stone with minimal footprint and maximum throwing range and damage
-	public static void SpawnKryptonite(Enums.ItemID itemId)
+	// Modifies an item with max throw force and damage
+	public static void ModifyThrowable(ItemInfo itemInfo)
 	{
 		var itemInfo = SpawnItemAndGetInfo(itemId);
 		itemInfo.m_Mass = 0.1f;
@@ -384,38 +418,25 @@ public class Spawn : Mod
 		itemInfo.m_ThrowDamage = float.MaxValue;
 	}
 
-	// Spawn a special torch with infinite burning duration
-	public static void SpawnEternalTorch(Enums.ItemID itemId)
+	// Modifies containers - Capacity = 1000
+	public static void ModifyContainer(LiquidContainerInfo itemInfo)
 	{
-		var itemInfo = (TorchInfo)SpawnItemAndGetInfo(itemId);
-		itemInfo.m_Mass = 0.1f;
-		itemInfo.m_BurningDurationInMinutes = float.MaxValue;
-		itemInfo.m_DamageWhenBurning = 1E-45f;
-		itemInfo.m_HealthLossPerSec = 1E-45f;
-	}
-
-	// Spawns Supers Containers - Capacity = 1000
-	public static void SpawnSuperContainer(Enums.ItemID itemId)
-	{
-		var itemInfo = (LiquidContainerInfo)SpawnItemAndGetInfo(itemId);
 		itemInfo.m_Capacity = 1000f;
 		itemInfo.m_Mass = 0.1f;
 	}
 
-	// Spawns a FireStarter that's better than a lighter
-	public static void SpawnSuperFireStarter(Enums.ItemID itemId)
+	// Modifies the stats of a firestarter
+	public static void ModifyFireStarter(ItemToolInfo itemInfo)
 	{
-		var itemInfo = (ItemToolInfo)SpawnItemAndGetInfo(itemId);
 		itemInfo.m_Mass = 0.1f;
 		itemInfo.m_HealthLossPerSec = 1E-45f;
 		itemInfo.m_MakeFireStaminaConsumptionMul = 0f;
 		itemInfo.m_MakeFireDuration = 0.1f;
 	}
 
-	// Spawns Supers Food - All stats
-	public static void SpawnSuperFood(Enums.ItemID itemId)
+	// Modifies foods - All stats
+	public static void ModifyFood(FoodInfo itemInfo)
 	{
-		var itemInfo = (FoodInfo)SpawnItemAndGetInfo(itemId);
 		itemInfo.m_Mass = 0.1f;
 		itemInfo.m_SpoilTime = -1f;
 		itemInfo.m_TroughFood = 100f;
@@ -431,6 +452,42 @@ public class Spawn : Mod
 		itemInfo.m_ConsumeEffectLevel = -15;
 		itemInfo.m_PoisonDebuff = 15;
 		itemInfo.m_MakeFireDuration = 100f;
+	}
+
+	private static void ModifyItemProperties(Type type, ItemInfo itemInfo, bool differentIsError = true)
+	{
+		switch (type)
+		{
+			case WeaponInfo:
+				{
+					ModifyWeapon((WeaponInfo)itemInfo);
+					break;
+				}
+			case LiquidContainerInfo:
+				{
+					ModifyContainer((LiquidContainerInfo)itemInfo);
+					break;
+				}
+			case FoodInfo:
+				{
+					ModifyFood((FoodInfo)itemInfo);
+					break;
+				}
+			case ItemToolInfo:
+				{
+					ModifyFireStarter((ItemToolInfo)itemInfo);
+					break;
+				}
+			default:
+				{
+					if (!differentIsError)
+					{
+						ModifyThrowable(itemInfo);
+						return;
+					}
+					Log(string.Format("ItemInfo type {0} is not supported!", type.Name));
+				}
+		}
 	}
 
 	private static readonly string _logPath = Path.Combine(DesktopPath, "SpawnLog.log");
@@ -483,6 +540,7 @@ public class Spawn : Mod
 		{ "Help", args => ExportHelpText() },
 		{ "Log", args => _logToDesktop = !_logToDesktop },
 		{ "Rain", args => ToggleRain() },
+		{ "Restore", args => RestoreSpecialItemProperties() },
 		{ "UnlockNotepad", args => UnlockNotepad() },
 		{ "IncreaseBackpackWeight", args => IncreaseBackpackWeight() },
 		{ "Teleport", args => Teleport(args) },
@@ -491,13 +549,12 @@ public class Spawn : Mod
 	};
 
 	private static readonly Dictionary<string, Action> SpecialItemMap = new Dictionary<string, Action>(StringComparer.OrdinalIgnoreCase) {
-		{ "First_Blade", () => SpawnSuperWeapon(Enums.ItemID.Obsidian_Bone_Blade) },
-		{ "Lucifers_Spear", () => SpawnSuperWeapon(Enums.ItemID.Obsidian_Spear) },
-		{ "Super_Bidon", () => SpawnSuperContainer(Enums.ItemID.clay_bidon) },
-		{ "Super_Pot", () => SpawnSuperContainer(Enums.ItemID.clay_bowl_small) },
-		{ "Magic_Pills", () => SpawnSuperFood(Enums.ItemID.Painkillers) },
-		{ "Kryptonite", () => SpawnKryptonite(Enums.ItemID.Stone) },
-		{ "Eternal_Torch", () => SpawnEternalTorch(Enums.ItemID.Torch) },
-		{ "Lighter", () => SpawnSuperFireStarter(Enums.ItemID.Rubing_Wood) },
+		{ "First_Blade", () => SpawnItemAndModify<WeaponInfo>(Enums.ItemID.Obsidian_Bone_Blade) },
+		{ "Lucifers_Spear", () => SpawnItemAndModify<WeaponInfo>(Enums.ItemID.Obsidian_Spear) },
+		{ "Super_Bidon", () => SpawnItemAndModify<LiquidContainerInfo>(Enums.ItemID.clay_bidon) },
+		{ "Super_Pot", () => SpawnItemAndModify<LiquidContainerInfo>(Enums.ItemID.clay_bowl_small) },
+		{ "Magic_Pills", () => SpawnItemAndModify<FoodInfo>(Enums.ItemID.Painkillers) },
+		{ "Kryptonite", () => SpawnItemAndModify<ItemInfo>(Enums.ItemID.Stone, false) },
+		{ "Lighter", () => SpawnItemAndModify<ItemToolInfo>(Enums.ItemID.Rubing_Wood) },
 	};
 }

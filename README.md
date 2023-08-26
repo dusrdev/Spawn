@@ -16,6 +16,7 @@
 * **spawn [id] rm [maxDistance]** - this is same as last one but can configure distance
 * **spawn [id] rm debug** - this will list all found items with their positions and distances but **NOT REMOVE THEM**
 * **spawn [specialItem]** - this will spawn an existing item but with modified stats
+* **spawn Restore** - this will attempt to restore the properties of the special items it can find in the backpack
 
 ### Special Items
 
@@ -23,7 +24,6 @@
 
 * `First_Blade` - this will look like the Obsidian_Bone_Blade, but will have near infinite durability and will kill/destroy every object with one strike/throw.
 * `Lucifers_Spear` - this will look like the Obsidian_Spear, but will be able to kill any enemy/animal with one strike/throw.
-* `Eternal_Torch` - this torch won't burn out on you.
 * `Kryptonite` - this is a small stone, but has way stronger throwing force and infinite damage, it will kill anything you throw it at with one blow.
 * `Lighter` - this is a fire starter that will ignite instantly, have unlimited uses and not use any stamina.
 
