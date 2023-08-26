@@ -5,20 +5,33 @@
 * **spawn Help** - this will export HelpText to `SpawnHelp.txt` on desktop (with commands and all item ids)
 * **spawn Log** - switches logging to `SpawnLog.log` on desktop (off by default)
 * **spawn UnlockNotepad** - this will unlock the whole notepad (crafting, recipes, info...)
+* **spawn Teleport [latitude] [longitude]** - this will teleport the player to the desired location
+* **spawn Rain** - Will toggle between start and stop rain (depending on the current weather)
+* **spawn Alias [alias] [id]** - this will save an alias for an item id, so you don't have to remember complicated item names, these aliases are stored in a file and will be re-loaded with the mod, so they are persistent. If you repeat the command with a different [id] the alias will be overridden.
+* **spawn Alias [alias]** - Without specifying an item id, the alias if exists, will be removed.
+* **spawn ItemInfo [id]** - This will log all the properties inside the ItemInfo for that specific item.
 * **spawn [id]** - this will spawn the item with the corresponding [id]
 * **spawn [id] [quantity]** - this will spawn multiples of the item, only applicable to items that can be places inside the backpack.
 * **spawn [id] rm** - this will destroy all items with that [id] in radius of 5 (approximately 2.5 meters/yards)
 * **spawn [id] rm [maxDistance]** - this is same as last one but can configure distance
 * **spawn [id] rm debug** - this will list all found items with their positions and distances but **NOT REMOVE THEM**
-* **spawn [specialWeapon]** - this will spawn an existing weapon but with modified stats
+* **spawn [specialItem]** - this will spawn an existing item but with modified stats
 
-### Special Weapons
+### Special Items
+
+#### Tools
 
 * `First_Blade` - this will look like the Obsidian_Bone_Blade, but will have near infinite durability and will kill/destroy every object with one strike/throw.
 * `Lucifers_Spear` - this will look like the Obsidian_Spear, but will be able to kill any enemy/animal with one strike/throw.
+* `Eternal_Torch` - this torch won't burn out on you.
+* `Kryptonite` - this is a small stone, but has way stronger throwing force and infinite damage, it will kill anything you throw it at with one blow.
+* `Lighter` - this is a fire starter that will ignite instantly, have unlimited uses and not use any stamina.
 
-Those weapons are inspired by the **Supernatural** TV show.
-> "What, you wanna go hunt? I'll hunt. I'll kill anything."
-> -Dean Winchester
+#### Containers
 
-And now you too will have a weapon that can kill any living being (angels and demons included).
+* `Super-Bidon` - this will look like the clay_bidon but will hold 1000 units of liquid.
+* `Super-Pot` - like clay_bowl_small and also hold 1000 units of liquid.
+
+#### Others
+
+* `Super_Pills` - this is a modified version of Painkillers, it will fill all of your stats, cure insomnia, fever, and venom/poison.
