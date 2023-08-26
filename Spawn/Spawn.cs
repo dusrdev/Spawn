@@ -500,9 +500,4 @@ public class Spawn : Mod
 		{ "Eternal_Torch", () => SpawnEternalTorch(Enums.ItemID.Torch) },
 		{ "Lighter", () => SpawnSuperFireStarter(Enums.ItemID.Rubing_Wood) },
 	};
-
-	private static string ClearName(string name)
-	{
-		return name.Replace("_", " ");
-	}
 }
