@@ -3,7 +3,7 @@
 ## Usage
 
 * **spawn Help** - this will export HelpText to `SpawnHelp.txt` on desktop (with commands and all item ids)
-* **spawn Log** - switches logging to `SpawnLog.log` on desktop (off by default)
+* **spawn ToggleLog** - switches logging to `SpawnLog.log` on desktop (off by default)
 * **spawn UnlockNotepad** - this will unlock the whole notepad (crafting, recipes, info...)
 * **spawn Teleport [latitude] [longitude]** - this will teleport the player to the desired location
 * **spawn Rain** - Will toggle between start and stop rain (depending on the current weather)
@@ -16,7 +16,8 @@
 * **spawn [id] rm [maxDistance]** - this is same as last one but can configure distance
 * **spawn [id] rm debug** - this will list all found items with their positions and distances but **NOT REMOVE THEM**
 * **spawn [specialItem]** - this will spawn an existing item but with modified stats
-* **spawn Restore** - this will attempt to restore the properties of the special items it can find in the backpack
+* **spawn [specialItem] [quantity]** - this will spawn multiples of the special item
+* **spawn RestoreSpecialItems** - this will attempt to restore the properties of the special items it can find in the backpack, Other items with the same id will also be granted the same properties. So either use other items for regular things, or spawn and destroy the special items according to usage.
 
 ### Special Items
 
@@ -29,8 +30,8 @@
 
 #### Containers
 
-* `Super-Bidon` - this will look like the clay_bidon but will hold 1000 units of liquid.
-* `Super-Pot` - like clay_bowl_small and also hold 1000 units of liquid.
+* `Super-Bidon` - this will look like the Bidon but will hold 1000 units of liquid.
+* `Super-Pot` - like Pot and also hold 1000 units of liquid.
 
 #### Others
 

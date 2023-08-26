@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Text.RegularExpressions;
+using System.Net;
 using System.Collections.Generic;
 using System.Text;
 using System;
@@ -30,11 +31,6 @@ public class Spawn : Mod
 	public void Start()
 	{
 		Debug.Log("Mod Spawn has been loaded!");
-		try {
-			RestoreSpecialItemProperties();
-		} catch {
-			Log("Couldn't restore item properties, ensure loading the mod after loading save, or use \"spawn restore\"");
-		}
 	}
 
 	private static readonly string DesktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
@@ -94,7 +90,16 @@ public class Spawn : Mod
 	{
 		if (SpecialItemMap.TryGetValue(args[0], out Action itemSpawnFunction))
 		{
-			itemSpawnFunction.Invoke();
+			var count = 1;
+			if (args.Count > 1 && !int.TryParse(args[1], out count))
+			{
+				Log(string.Format("Quantity `{0}` is invalid!", args[1]));
+				return;
+			}
+			for (var i = 0; i < count; i++)
+			{
+				itemSpawnFunction.Invoke();
+			}
 			return;
 		}
 
@@ -354,32 +359,31 @@ public class Spawn : Mod
 		Log(ItemAliasManager.AddNickname(args[1], itemId));
 	}
 
-	// private static ItemInfo SpawnItemAndGetInfo(Enums.ItemID itemId)
-	// {
-	// 	Log(string.Format("Spawning modified \"{0}\".", itemId));
-	// 	var manager = ItemsManager.Get();
-	// 	var item = manager.CreateItem(itemId, false);
-	// 	var backpack = InventoryBackpack.Get();
-	// 	backpack.InsertItem(item, null, null, true, true, true, true, true);
-	// 	return item.m_Info;
-	// }
-
-	private static void RestoreSpecialItemProperties()
+	private static void RestoreSpecialItems()
 	{
 		var backpack = InventoryBackpack.Get();
+		int i = 0;
 
-		// foreach item in backpack
-
-		var itemInfo = item.m_Info;
-		if (m_Health <= 100f)
-		{ // Regular item
-			continue;
+		foreach (var item in backpack.m_Items)
+		{
+			var itemInfo = item.m_Info;
+			TryRestoreSpecialItemProperties(itemInfo);
 		}
-		var type = m_Info.GetType();
-		if (m_Info.m_ID == Enums.ItemID.Stone)
+		TryRestoreSpecialItemProperties(backpack.m_EquippedItem.m_Info);
+	}
+
+	private static void TryRestoreSpecialItemProperties(ItemInfo itemInfo)
+	{
+		if (!SpecialItemIds.Contains(itemInfo.m_ID))
+		{ // Regular item
+			return;
+		}
+		var type = itemInfo.GetType();
+		Log(string.Format("Restoring \"{0}\"", itemInfo.m_ID));
+		if (itemInfo.m_ID == Enums.ItemID.Stone)
 		{
 			ModifyItemProperties(type, itemInfo, false);
-			continue;
+			return;
 		}
 		ModifyItemProperties(type, itemInfo);
 	}
@@ -412,7 +416,6 @@ public class Spawn : Mod
 	// Modifies an item with max throw force and damage
 	public static void ModifyThrowable(ItemInfo itemInfo)
 	{
-		var itemInfo = SpawnItemAndGetInfo(itemId);
 		itemInfo.m_Mass = 0.1f;
 		itemInfo.m_ThrowForce = 480f;
 		itemInfo.m_ThrowDamage = float.MaxValue;
@@ -456,37 +459,30 @@ public class Spawn : Mod
 
 	private static void ModifyItemProperties(Type type, ItemInfo itemInfo, bool differentIsError = true)
 	{
-		switch (type)
+		if (type == typeof(WeaponInfo))
 		{
-			case WeaponInfo:
-				{
-					ModifyWeapon((WeaponInfo)itemInfo);
-					break;
-				}
-			case LiquidContainerInfo:
-				{
-					ModifyContainer((LiquidContainerInfo)itemInfo);
-					break;
-				}
-			case FoodInfo:
-				{
-					ModifyFood((FoodInfo)itemInfo);
-					break;
-				}
-			case ItemToolInfo:
-				{
-					ModifyFireStarter((ItemToolInfo)itemInfo);
-					break;
-				}
-			default:
-				{
-					if (!differentIsError)
-					{
-						ModifyThrowable(itemInfo);
-						return;
-					}
-					Log(string.Format("ItemInfo type {0} is not supported!", type.Name));
-				}
+			ModifyWeapon((WeaponInfo)itemInfo);
+		}
+		else if (type == typeof(LiquidContainerInfo))
+		{
+			ModifyContainer((LiquidContainerInfo)itemInfo);
+		}
+		else if (type == typeof(FoodInfo))
+		{
+			ModifyFood((FoodInfo)itemInfo);
+		}
+		else if (type == typeof(ItemToolInfo))
+		{
+			ModifyFireStarter((ItemToolInfo)itemInfo);
+		}
+		else if (!differentIsError)
+		{
+			ModifyThrowable(itemInfo);
+		}
+		else
+		{
+			Log(string.Format("Modification of '{0}' and type '{1}' is not supported!", itemInfo.m_ID, type.Name));
+			return;
 		}
 	}
 
@@ -538,9 +534,9 @@ public class Spawn : Mod
 
 	private static readonly Dictionary<string, Action<ArraySegment<string>>> SpecialCommands = new Dictionary<string, Action<ArraySegment<string>>>(StringComparer.OrdinalIgnoreCase) {
 		{ "Help", args => ExportHelpText() },
-		{ "Log", args => _logToDesktop = !_logToDesktop },
+		{ "ToggleLog", args => _logToDesktop = !_logToDesktop },
 		{ "Rain", args => ToggleRain() },
-		{ "Restore", args => RestoreSpecialItemProperties() },
+		{ "RestoreSpecialItems", args => RestoreSpecialItems() },
 		{ "UnlockNotepad", args => UnlockNotepad() },
 		{ "IncreaseBackpackWeight", args => IncreaseBackpackWeight() },
 		{ "Teleport", args => Teleport(args) },
@@ -551,10 +547,20 @@ public class Spawn : Mod
 	private static readonly Dictionary<string, Action> SpecialItemMap = new Dictionary<string, Action>(StringComparer.OrdinalIgnoreCase) {
 		{ "First_Blade", () => SpawnItemAndModify<WeaponInfo>(Enums.ItemID.Obsidian_Bone_Blade) },
 		{ "Lucifers_Spear", () => SpawnItemAndModify<WeaponInfo>(Enums.ItemID.Obsidian_Spear) },
-		{ "Super_Bidon", () => SpawnItemAndModify<LiquidContainerInfo>(Enums.ItemID.clay_bidon) },
-		{ "Super_Pot", () => SpawnItemAndModify<LiquidContainerInfo>(Enums.ItemID.clay_bowl_small) },
+		{ "Super_Bidon", () => SpawnItemAndModify<LiquidContainerInfo>(Enums.ItemID.Bidon) },
+		{ "Super_Pot", () => SpawnItemAndModify<LiquidContainerInfo>(Enums.ItemID.Pot) },
 		{ "Magic_Pills", () => SpawnItemAndModify<FoodInfo>(Enums.ItemID.Painkillers) },
 		{ "Kryptonite", () => SpawnItemAndModify<ItemInfo>(Enums.ItemID.Stone, false) },
 		{ "Lighter", () => SpawnItemAndModify<ItemToolInfo>(Enums.ItemID.Rubing_Wood) },
+	};
+
+	private static readonly HashSet<Enums.ItemID> SpecialItemIds = new HashSet<Enums.ItemID> {
+		Enums.ItemID.Obsidian_Bone_Blade,
+		Enums.ItemID.Obsidian_Spear,
+		Enums.ItemID.Bidon,
+		Enums.ItemID.Pot,
+		Enums.ItemID.Painkillers,
+		Enums.ItemID.Stone,
+		Enums.ItemID.Rubing_Wood,
 	};
 }
