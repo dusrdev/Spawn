@@ -7,6 +7,7 @@
 * **spawn UnlockNotepad** - this will unlock the whole notepad (crafting, recipes, info...)
 * **spawn Teleport [latitude] [longitude]** - this will teleport the player to the desired location
 * **spawn Rain** - Will toggle between start and stop rain (depending on the current weather)
+* **spawn IncreaseBackPackWeight** - Will increase the max weight of the backpack to 999.
 * **spawn Alias [alias] [id]** - this will save an alias for an item id, so you don't have to remember complicated item names, these aliases are stored in a file and will be re-loaded with the mod, so they are persistent. If you repeat the command with a different [id] the alias will be overridden.
 * **spawn Alias [alias]** - Without specifying an item id, the alias if exists, will be removed.
 * **spawn ItemInfo [id]** - This will log all the properties inside the ItemInfo for that specific item.
