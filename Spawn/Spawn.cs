@@ -498,7 +498,7 @@ public class Spawn : Mod
 
 	private static void ModifyItemProperties(Type type, ItemInfo itemInfo, bool differentIsError = true)
 	{
-		if (type == typeof(WeaponInfo))
+		if (type == typeof(WeaponInfo) || type == typeof(SpearInfo))
 		{
 			ModifyWeapon((WeaponInfo)itemInfo);
 		}
