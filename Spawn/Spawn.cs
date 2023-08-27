@@ -245,8 +245,8 @@ public class Spawn : Mod
 			item.m_Info.m_DestroyByItemsManager = true;
 			item.m_Info.m_CantDestroy = false;
 			ItemsManager.Get().AddItemToDestroy(item);
-			index++;
 			Log(string.Format("Item {0} removed!", index));
+			index++;
 		}
 	}
 
@@ -585,6 +585,7 @@ public class Spawn : Mod
 	};
 
 	private static readonly Dictionary<string, Action> SpecialItemMap = new Dictionary<string, Action>(StringComparer.OrdinalIgnoreCase) {
+		{ "Knife", () => SpawnItemAndModify<WeaponInfo>(Enums.ItemID.metal_blade_weapon) },
 		{ "First_Blade", () => SpawnItemAndModify<WeaponInfo>(Enums.ItemID.Obsidian_Bone_Blade) },
 		{ "Lucifers_Spear", () => SpawnItemAndModify<WeaponInfo>(Enums.ItemID.Obsidian_Spear) },
 		{ "Super_Bidon", () => SpawnItemAndModify<LiquidContainerInfo>(Enums.ItemID.Bidon) },
@@ -595,6 +596,7 @@ public class Spawn : Mod
 	};
 
 	private static readonly HashSet<Enums.ItemID> SpecialItemIds = new HashSet<Enums.ItemID> {
+		Enums.ItemID.metal_blade_weapon,
 		Enums.ItemID.Obsidian_Bone_Blade,
 		Enums.ItemID.Obsidian_Spear,
 		Enums.ItemID.Bidon,
