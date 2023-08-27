@@ -281,6 +281,45 @@ public class Spawn : Mod
 		Log("To prevent errors, save the game only when the backpack weight is <= 50");
 	}
 
+	// Gives the player all diseases and most wounds
+	// Used for the "Mr... I don't feel so good" achievement
+	public static void GetThePlague() {
+		var diseasesModule = PlayerDiseasesModule.Get();
+		diseasesModule.RequestDisease(Enums.ConsumeEffect.Fever, 0f, 1, 1);
+		diseasesModule.RequestDisease(Enums.ConsumeEffect.FoodPoisoning, 1f, 2, 1);
+		diseasesModule.RequestDisease(Enums.ConsumeEffect.ParasiteSickness, 1f, 2, 1);
+		diseasesModule.RequestDisease(Enums.ConsumeEffect.DirtSickness, 0f, 2, 1);
+		diseasesModule.RequestDisease(Enums.ConsumeEffect.Insomnia, 0f, 2, 1);
+		var bodyInspectionController = BodyInspectionController.Get();
+		var injuryModule = PlayerInjuryModule.Get();
+		// Leech
+		var leechPlace = Enums.InjuryPlace.LHand;
+		var leechInjuryType = Enums.InjuryType.Leech;
+		var leechSlot = bodyInspectionController.GetFreeWoundSlot(leechPlace, leechInjuryType);
+		injuryModule.AddInjury(leechInjuryType, leechPlace, leechSlot, Enums.InjuryState.Closed);
+		var leechSlot2 = bodyInspectionController.GetFreeWoundSlot(leechPlace, leechInjuryType);
+		injuryModule.AddInjury(leechInjuryType, leechPlace, leechSlot2, Enums.InjuryState.Closed);
+		// Laceration
+		var lacerationInjuryType = Enums.InjuryType.Laceration;
+		var lacerationSlot = bodyInspectionController.GetFreeWoundSlot(leechPlace, lacerationInjuryType);
+		injuryModule.AddInjury(lacerationInjuryType, leechPlace, lacerationSlot, Enums.InjuryState.Bleeding);
+		// Worm
+		var wormPlace = Enums.InjuryPlace.RHand;
+		var wormInjuryType = Enums.InjuryType.Worm;
+		var wormSlot = bodyInspectionController.GetFreeWoundSlot(wormPlace, wormInjuryType);
+		injuryModule.AddInjury(wormInjuryType, wormPlace, wormSlot, Enums.InjuryState.WormInside);
+		// Rash
+		var rashPlace = Enums.InjuryPlace.LLeg;
+		var rashInjuryType = Enums.InjuryType.Rash;
+		var rashSlot = bodyInspectionController.GetFreeWoundSlot(rashPlace, rashInjuryType);
+		injuryModule.AddInjury(rashInjuryType, rashPlace, rashSlot, Enums.InjuryState.Closed);
+		// Poison
+		var poisonPlace = Enums.InjuryPlace.RLeg;
+		var poisonInjuryType = Enums.InjuryType.SnakeBite;
+		var poisonSlot = bodyInspectionController.GetFreeWoundSlot(poisonPlace, poisonInjuryType);
+		injuryModule.AddInjury(poisonInjuryType, poisonPlace, poisonSlot, Enums.InjuryState.Open, 3);
+	}
+
 	// Teleports the player to the specified coordinates
 	public static void Teleport(ArraySegment<string> args)
 	{
@@ -463,7 +502,7 @@ public class Spawn : Mod
 		{
 			ModifyWeapon((WeaponInfo)itemInfo);
 		}
-		else if (type == typeof(LiquidContainerInfo))
+		else if (type == typeof(LiquidContainerInfo) || type == typeof(BowlInfo))
 		{
 			ModifyContainer((LiquidContainerInfo)itemInfo);
 		}
@@ -542,13 +581,14 @@ public class Spawn : Mod
 		{ "Teleport", args => Teleport(args) },
 		{ "Alias", args => AddItemAlias(args) },
 		{ "ItemInfo", args => LogItemInfo(args) },
+		{ "GetThePlague", args => GetThePlague() },
 	};
 
 	private static readonly Dictionary<string, Action> SpecialItemMap = new Dictionary<string, Action>(StringComparer.OrdinalIgnoreCase) {
 		{ "First_Blade", () => SpawnItemAndModify<WeaponInfo>(Enums.ItemID.Obsidian_Bone_Blade) },
 		{ "Lucifers_Spear", () => SpawnItemAndModify<WeaponInfo>(Enums.ItemID.Obsidian_Spear) },
 		{ "Super_Bidon", () => SpawnItemAndModify<LiquidContainerInfo>(Enums.ItemID.Bidon) },
-		{ "Super_Pot", () => SpawnItemAndModify<LiquidContainerInfo>(Enums.ItemID.Pot) },
+		{ "Super_Pot", () => SpawnItemAndModify<BowlInfo>(Enums.ItemID.Pot) },
 		{ "Magic_Pills", () => SpawnItemAndModify<FoodInfo>(Enums.ItemID.Painkillers) },
 		{ "Kryptonite", () => SpawnItemAndModify<ItemInfo>(Enums.ItemID.Stone, false) },
 		{ "Lighter", () => SpawnItemAndModify<ItemToolInfo>(Enums.ItemID.Rubing_Wood) },
