@@ -15,10 +15,10 @@ public static class ItemAliasManager
     static ItemAliasManager()
     {
         _itemAliases = new Dictionary<string, Enums.ItemID>(StringComparer.OrdinalIgnoreCase);
-        LoadItemNicknames();
+        LoadAliases();
     }
 
-    private static void LoadItemNicknames()
+    private static void LoadAliases()
     {
         if (!File.Exists(AliasesPath))
         {
@@ -44,7 +44,7 @@ public static class ItemAliasManager
         Spawn.Log("Loaded item aliases");
     }
 
-    private static void SaveItemNicknames()
+    private static void SaveItemAliases()
     {
         var csv = new string[_itemAliases.Count];
         var i = 0;
@@ -55,26 +55,40 @@ public static class ItemAliasManager
         File.WriteAllLines(AliasesPath, csv);
     }
 
-    public static bool TryGetNickname(string nickname, out Enums.ItemID itemID)
+    public static bool TryGetAlias(string alias, out Enums.ItemID itemID)
     {
-        return _itemAliases.TryGetValue(nickname, out itemID);
+        return _itemAliases.TryGetValue(alias, out itemID);
     }
 
-    public static string AddNickname(string nickname, Enums.ItemID itemID)
+    public static string AddAlias(string alias, Enums.ItemID itemID)
     {
         if (itemID != Enums.ItemID.None)
         {
-            _itemAliases[nickname] = itemID;
-            SaveItemNicknames();
-            return string.Format("Added alias {0} for item {1}", nickname, itemID);
+            _itemAliases[alias] = itemID;
+            SaveItemAliases();
+            return string.Format("Added alias {0} for item {1}", alias, itemID);
         }
         // None is deletion
-        if (!_itemAliases.ContainsKey(nickname))
+        if (!_itemAliases.ContainsKey(alias))
         {
-            return string.Format("Alias {0} does not exist", nickname);
+            return string.Format("Alias {0} does not exist", alias);
         }
-        _itemAliases.Remove(nickname);
-        SaveItemNicknames();
-        return string.Format("Removed alias {0}", nickname);
+        _itemAliases.Remove(alias);
+        SaveItemAliases();
+        return string.Format("Removed alias {0}", alias);
+    }
+
+    public static string ListSavedAliases()
+    {
+        if (_itemAliases.Count == 0)
+        {
+            return "No aliases saved...";
+        }
+        var sb = new StringBuilder();
+        foreach (var kv in _itemAliases)
+        {
+            sb.AppendLine(string.Format("'{0}': {1}", kv.Key, kv.Value));
+        }
+        return sb.ToString();
     }
 }
