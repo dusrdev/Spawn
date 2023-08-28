@@ -5,14 +5,19 @@
 * **spawn Help** - this will export HelpText to `SpawnHelp.txt` on desktop (with commands and all item ids)
 * **spawn ToggleLog** - switches logging to `SpawnLog.log` on desktop (off by default)
 * **spawn UnlockNotepad** - this will unlock the whole notepad (crafting, recipes, info...)
+* **spawn SaveLocation list** - this will list the saved locations and their coordinates
+* **spawn SaveLocation [locationName]** - this will save the current location under the requested name
+* **spawn SaveLocation [locationName] remove** - remove the requested location
+* **spawn Teleport [savedLocationName]** - this will teleport the player to the desired saved location
 * **spawn Teleport [latitude] [longitude]** - this will teleport the player to the desired location
 * **spawn Rain** - Will toggle between start and stop rain (depending on the current weather)
 * **spawn IncreaseBackPackWeight** - Will increase the max weight of the backpack to 999.
 * **spawn Alias [alias] [id]** - this will save an alias for an item id, so you don't have to remember complicated item names, these aliases are stored in a file and will be re-loaded with the mod, so they are persistent. If you repeat the command with a different [id] the alias will be overridden.
 * **spawn Alias [alias]** - Without specifying an item id, the alias if exists, will be removed.
+* **spawn Alias list** - this will list the saved item aliases.
 * **spawn ItemInfo [id]** - This will log all the properties inside the ItemInfo for that specific item.
-* **spawn [id]** - this will spawn the item with the corresponding [id]
-* **spawn [id] [quantity]** - this will spawn multiples of the item, only applicable to items that can be places inside the backpack.
+* **spawn [id/alias]** - this will spawn the item with the corresponding [id]
+* **spawn [id/alias] [quantity]** - this will spawn multiples of the item, only applicable to items that can be places inside the backpack.
 * **spawn [id] rm** - this will destroy all items with that [id] in radius of 5 (approximately 2.5 meters/yards)
 * **spawn [id] rm [maxDistance]** - this is same as last one but can configure distance
 * **spawn [id] rm debug** - this will list all found items with their positions and distances but **NOT REMOVE THEM**
