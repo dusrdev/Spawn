@@ -1,10 +1,10 @@
 ﻿using System.Net;
+using System.Reflection;
 using System.Collections.Generic;
 using System.Text;
 using System;
 using System.IO;
 using UnityEngine;
-using SpawnComponents;
 using static SpawnExtensions;
 
 public class Spawn : Mod
@@ -18,9 +18,9 @@ public class Spawn : Mod
 			sb.AppendLine(command);
 		}
 		sb.AppendLine()
-            .AppendLine("Special Items:")
-            .AppendLine(ItemsSpawnManager.GetSpecialItemNames())
-            .AppendLine();
+			.AppendLine("Special Items:")
+			.AppendLine(GetSpecialItemNames())
+			.AppendLine();
 		return sb.ToString();
 	}
 
@@ -48,8 +48,8 @@ public class Spawn : Mod
 	}
 
 
-	[ConsoleCommand("spawn", "spawn [ID/help/log] [Quantity/rm] [MaxDistance/debug]")]
-	private static void Command(string[] args)
+	[ConsoleCommand("spawn", "Check help for more info")]
+	public static void Command(string[] args)
 	{
 		if (args.Length == 0)
 		{
@@ -72,11 +72,11 @@ public class Spawn : Mod
 
 		if (segment.Count > 1 && Equals(args[1], "rm"))
 		{
-			ItemsSpawnManager.RemoveItem(segment);
+			RemoveItem(segment);
 		}
 		else
 		{
-			ItemsSpawnManager.SpawnItem(segment);
+			SpawnItem(segment);
 		}
 	}
 
@@ -88,13 +88,782 @@ public class Spawn : Mod
 	private static readonly Dictionary<string, Action<ArraySegment<string>>> SpecialCommands = new Dictionary<string, Action<ArraySegment<string>>>(StringComparer.OrdinalIgnoreCase) {
 		{ "Help", args => ExportHelpText() },
 		{ "ToggleLog", args => ToggleLogToDesktop() },
-		{ "Rain", args => SpecialCommandsManager.ToggleRain() },
-		{ "RestoreSpecialItems", args => ItemsSpawnManager.RestoreSpecialItems() },
-		{ "UnlockNotepad", args => SpecialCommandsManager.UnlockNotepad() },
-		{ "IncreaseBackpackWeight", args => SpecialCommandsManager.IncreaseBackpackWeight() },
-		{ "Teleport", args => TeleportationManager.Teleport(args) },
-		{ "Alias", args => ItemsSpawnManager.AddItemAlias(args) },
-		{ "SaveLocation", args => TeleportationManager.AddSavedLocation(args) },
-		{ "ItemInfo", args => SpecialCommandsManager.LogItemInfo(args) },
+		{ "Rain", args => ToggleRain() },
+		{ "RestoreSpecialItems", args => RestoreSpecialItems() },
+		{ "UnlockNotepad", args => UnlockNotepad() },
+		{ "IncreaseBackpackWeight", args => IncreaseBackpackWeight() },
+		{ "Teleport", args => Teleport(args) },
+		{ "Alias", args => AddItemAlias(args) },
+		{ "SaveLocation", args => AddSavedLocation(args) },
+		{ "ItemInfo", args => LogItemInfo(args) },
 	};
+
+	#region Spawn and Remove
+	public static void SpawnItem(ArraySegment<string> args)
+	{
+		if (SpecialItemMap.TryGetValue(args[0], out Action itemSpawnFunction))
+		{
+			var count = 1;
+			if (args.Count > 1 && !int.TryParse(args[1], out count))
+			{
+				LogMessage(string.Format("Quantity `{0}` is invalid!", args[1]));
+				return;
+			}
+			for (var i = 0; i < count; i++)
+			{
+				itemSpawnFunction.Invoke();
+			}
+			return;
+		}
+
+		if (ItemAliasManager.TryGetAlias(args[0], out Enums.ItemID aliasedItemId))
+		{
+			SpawnItemInternal(aliasedItemId, args);
+			return;
+		}
+
+		if (!ParseEnum(args[0], out Enums.ItemID itemId))
+		{
+			LogMessage(string.Format("ItemId `{0}` does not exist, refer to \"spawn help\"", args[0]));
+			return;
+		}
+
+		SpawnItemInternal(itemId, args);
+	}
+
+	private static void SpawnItemInternal(Enums.ItemID itemId, ArraySegment<string> args)
+	{
+		var quantity = 1;
+
+		if (args.Count > 1 && !int.TryParse(args[1], out quantity))
+		{
+			LogMessage(string.Format("Quantity `{0}` is invalid!", args[1]));
+			return;
+		}
+
+		var manager = ItemsManager.Get();
+		var itemInfo = manager.GetInfo(itemId);
+
+		if (itemInfo.m_CanBeAddedToInventory)
+		{
+			LogMessage(string.Format("Spawning {0} x `{1}` to backpack", quantity, itemId));
+			var backpack = InventoryBackpack.Get();
+			for (var i = 0; i < quantity; i++)
+			{
+				var itemInstance = manager.CreateItem(itemId, false);
+				backpack.InsertItem(itemInstance, null, null, true, true, true, true, true);
+			}
+			return;
+		}
+
+		LogMessage(string.Format("Spawning at player: {0}", itemId));
+		var item = manager.CreateItem(itemId, false);
+		var playerTransform = Player.Get().transform;
+		item.transform.position = playerTransform.position;
+		item.transform.rotation = playerTransform.rotation;
+		item.ItemsManagerRegister(true);
+	}
+
+	private static void SpawnItemAndModify<T>(Enums.ItemID itemId, bool differentTypeIsError = true) where T : ItemInfo
+	{
+		LogMessage(string.Format("Spawning modified \"{0}\".", itemId));
+		var manager = ItemsManager.Get();
+		var item = manager.CreateItem(itemId, false);
+		var backpack = InventoryBackpack.Get();
+		backpack.InsertItem(item, null, null, true, true, true, true, true);
+		ModifyItemProperties(typeof(T), item.m_Info, differentTypeIsError);
+	}
+
+	public static void RemoveItem(ArraySegment<string> args)
+	{
+		var itemId = Enums.ItemID.None;
+		var isAlias = ItemAliasManager.TryGetAlias(args[0], out itemId);
+		if (!isAlias && !ParseEnum(args[0], out itemId))
+		{
+			LogMessage(string.Format("ItemId `{0}` does not exist, refer to \"spawn help\"", args[0]));
+			return;
+		}
+
+		float maxDistance = 5f;
+		bool debug = false;
+
+		if (args.Count > 2)
+		{
+			if (Equals(args[2], "debug"))
+			{
+				debug = true;
+			}
+			else
+			{
+				var isValid = float.TryParse(args[2], out maxDistance);
+				if (!isValid)
+				{
+					LogMessage(string.Format("Invalid distance: {0}", args[2]));
+					return;
+				}
+			}
+		}
+
+		var playerTransform = Player.Get().transform;
+		var playerPosition = playerTransform.position;
+
+		var sb = new StringBuilder();
+		sb.Append("ItemID: ")
+		  .AppendLine(itemId.ToString())
+		  .Append("MaxDistance: ")
+		  .AppendLine(maxDistance.ToString())
+		  .Append("Debug: ")
+		  .AppendLine(debug.ToString())
+		  .AppendLine()
+		  .Append("PlayerPosition: ")
+		  .AppendLine(playerPosition.ToString())
+		  .AppendLine();
+
+		var items = new Dictionary<int, Item>();
+		int index = 1;
+		LogMessage(string.Format("Searching for {0} at distance {1}", itemId, maxDistance));
+		foreach (var item in Item.s_AllItems)
+		{
+			if (item.m_Info.m_ID != itemId)
+			{
+				continue;
+			}
+
+			var itemPosition = item.transform.position;
+			var distance = Vector3.Distance(playerPosition, itemPosition);
+
+			if (debug)
+			{
+				sb.Append("ItemPosition: ")
+				  .AppendLine(itemPosition.ToString())
+				  .Append("Distance: ")
+				  .AppendLine(distance.ToString());
+			}
+
+			if (distance > maxDistance)
+			{
+				continue;
+			}
+			LogMessage(string.Format("Item {0} found at distance {1}", index, distance));
+			items[index] = item;
+			index++;
+		}
+
+		if (index == 1)
+		{
+			LogMessage("No items found!");
+		}
+
+		if (debug)
+		{
+			var path = Path.Combine(DesktopPath, "rmDebug.txt");
+			File.WriteAllText(path, sb.ToString());
+		}
+
+		index = 1;
+
+		while (!debug && items.Count > 0)
+		{
+			var item = items[index];
+			items.Remove(index);
+			item.m_Info.m_CanBeRemovedFromInventory = true;
+			item.m_Info.m_DestroyByItemsManager = true;
+			item.m_Info.m_CantDestroy = false;
+			ItemsManager.Get().AddItemToDestroy(item);
+			LogMessage(string.Format("Item {0} removed!", index));
+			index++;
+		}
+	}
+
+	public static void RestoreSpecialItems()
+	{
+		var backpack = InventoryBackpack.Get();
+		int i = 0;
+
+		foreach (var item in backpack.m_Items)
+		{
+			var itemInfo = item.m_Info;
+			TryRestoreSpecialItemProperties(itemInfo);
+		}
+		TryRestoreSpecialItemProperties(backpack.m_EquippedItem.m_Info);
+	}
+
+	private static void TryRestoreSpecialItemProperties(ItemInfo itemInfo)
+	{
+		if (!SpecialItemIds.Contains(itemInfo.m_ID))
+		{ // Regular item
+			return;
+		}
+		var type = itemInfo.GetType();
+		LogMessage(string.Format("Restoring \"{0}\"", itemInfo.m_ID));
+		if (itemInfo.m_ID == Enums.ItemID.Stone)
+		{
+			ModifyItemProperties(type, itemInfo, false);
+			return;
+		}
+		ModifyItemProperties(type, itemInfo);
+	}
+
+	// Modifies weapons - Infinite Damage and Durability
+	private static void ModifyWeapon(WeaponInfo itemInfo)
+	{
+		itemInfo.m_Mass = 0.1f;
+		itemInfo.m_DamageSelf = 1E-45f; // Smallest number that is greater than 0
+		itemInfo.m_HealthLossPerSec = 0f;
+		itemInfo.m_DefaultDamage = float.MaxValue;
+		itemInfo.m_HumanDamage = float.MaxValue;
+		itemInfo.m_AnimalDamage = float.MaxValue;
+		itemInfo.m_PlantDamage = float.MaxValue;
+		itemInfo.m_TreeDamage = float.MaxValue;
+		itemInfo.m_IronVeinDamage = float.MaxValue;
+		itemInfo.m_ThrowDamage = float.MaxValue;
+	}
+
+	// Modifies an item with max throw force and damage
+	private static void ModifyThrowable(ItemInfo itemInfo)
+	{
+		itemInfo.m_Mass = 0.1f;
+		itemInfo.m_ThrowForce = 480f;
+		itemInfo.m_ThrowDamage = float.MaxValue;
+	}
+
+	// Modifies containers - Capacity = 1000
+	private static void ModifyContainer(LiquidContainerInfo itemInfo)
+	{
+		itemInfo.m_Capacity = 1000f;
+		itemInfo.m_Mass = 0.1f;
+	}
+
+	// Modifies the stats of a firestarter
+	private static void ModifyFireStarter(ItemToolInfo itemInfo)
+	{
+		itemInfo.m_Mass = 0.1f;
+		itemInfo.m_HealthLossPerSec = 1E-45f;
+		itemInfo.m_MakeFireStaminaConsumptionMul = 0f;
+		itemInfo.m_MakeFireDuration = 0.1f;
+	}
+
+	// Modifies foods - All stats
+	private static void ModifyFood(FoodInfo itemInfo)
+	{
+		itemInfo.m_Mass = 0.1f;
+		itemInfo.m_SpoilTime = -1f;
+		itemInfo.m_TroughFood = 100f;
+		itemInfo.m_Fat = 100f;
+		itemInfo.m_Carbohydrates = 100f;
+		itemInfo.m_Proteins = 100f;
+		itemInfo.m_Water = 100f;
+		itemInfo.m_AddEnergy = 100f;
+		itemInfo.m_SanityChange = 100;
+		itemInfo.m_ConsumeEffect = Enums.ConsumeEffect.Fever;
+		itemInfo.m_ConsumeEffectChance = 1f;
+		itemInfo.m_ConsumeEffectDelay = 0f;
+		itemInfo.m_ConsumeEffectLevel = -15;
+		itemInfo.m_PoisonDebuff = 15;
+		itemInfo.m_MakeFireDuration = 100f;
+	}
+
+	private static void ModifyItemProperties(Type type, ItemInfo itemInfo, bool differentIsError = true)
+	{
+		if (type == typeof(WeaponInfo) || type == typeof(SpearInfo))
+		{
+			ModifyWeapon((WeaponInfo)itemInfo);
+		}
+		else if (type == typeof(LiquidContainerInfo) || type == typeof(BowlInfo))
+		{
+			ModifyContainer((LiquidContainerInfo)itemInfo);
+		}
+		else if (type == typeof(FoodInfo))
+		{
+			ModifyFood((FoodInfo)itemInfo);
+		}
+		else if (type == typeof(ItemToolInfo))
+		{
+			ModifyFireStarter((ItemToolInfo)itemInfo);
+		}
+		else if (!differentIsError)
+		{
+			ModifyThrowable(itemInfo);
+		}
+		else
+		{
+			LogMessage(string.Format("Modification of '{0}' and type '{1}' is not supported!", itemInfo.m_ID, type.Name));
+			return;
+		}
+	}
+
+	public static void AddItemAlias(ArraySegment<string> args)
+	{
+		if (args.Count < 2)
+		{
+			LogMessage("Teleport requires additional arguments: [alias] [itemId=emptyToRemove]");
+			return;
+		}
+
+		if (args.Count == 2)
+		{
+			if (Equals(args[1], "list"))
+			{
+				LogMessage(ItemAliasManager.ListSavedAliases());
+				return;
+			}
+			LogMessage(ItemAliasManager.AddAlias(args[1], Enums.ItemID.None));
+			return;
+		}
+
+		if (!ParseEnum(args[2], out Enums.ItemID itemId))
+		{
+			LogMessage(string.Format("ItemId `{0}` does not exist, refer to \"spawn help\"", args[2]));
+			return;
+		}
+
+		LogMessage(ItemAliasManager.AddAlias(args[1], itemId));
+	}
+
+	private static readonly Dictionary<string, Action> SpecialItemMap = new Dictionary<string, Action>(StringComparer.OrdinalIgnoreCase)
+		 {
+		{ "Knife", () => SpawnItemAndModify<WeaponInfo>(Enums.ItemID.metal_blade_weapon) },
+		{ "First_Blade", () => SpawnItemAndModify<WeaponInfo>(Enums.ItemID.Obsidian_Bone_Blade) },
+		{ "Lucifers_Spear", () => SpawnItemAndModify<WeaponInfo>(Enums.ItemID.Obsidian_Spear) },
+		{ "Super_Bidon", () => SpawnItemAndModify<LiquidContainerInfo>(Enums.ItemID.Bidon) },
+		{ "Super_Pot", () => SpawnItemAndModify<BowlInfo>(Enums.ItemID.Pot) },
+		{ "Magic_Pills", () => SpawnItemAndModify<FoodInfo>(Enums.ItemID.Painkillers) },
+		{ "Kryptonite", () => SpawnItemAndModify<ItemInfo>(Enums.ItemID.Stone, false) },
+		{ "Lighter", () => SpawnItemAndModify<ItemToolInfo>(Enums.ItemID.Rubing_Wood) },
+	};
+
+	public static string GetSpecialItemNames()
+	{
+		var sb = new StringBuilder();
+		foreach (var kv in SpecialItemMap)
+		{
+			sb.AppendLine(kv.Key);
+		}
+		return sb.ToString();
+	}
+
+	public static readonly HashSet<Enums.ItemID> SpecialItemIds = new HashSet<Enums.ItemID> {
+		Enums.ItemID.metal_blade_weapon,
+		Enums.ItemID.Obsidian_Bone_Blade,
+		Enums.ItemID.Obsidian_Spear,
+		Enums.ItemID.Bidon,
+		Enums.ItemID.Pot,
+		Enums.ItemID.Painkillers,
+		Enums.ItemID.Stone,
+		Enums.ItemID.Rubing_Wood,
+	};
+	#endregion
+
+	#region Special Commands
+	// Toggles rain on/off
+	public static void ToggleRain()
+	{
+		var manager = RainManager.Get();
+		if (manager.IsRain())
+		{
+			manager.ScenarioStopRain();
+			LogMessage("Stopping rain!");
+			return;
+		}
+		manager.ScenarioStartRain();
+		LogMessage("Starting rain!");
+	}
+
+	// Unlocks the whole notepad
+	public static void UnlockNotepad()
+	{
+		var manager = ItemsManager.Get();
+		manager.UnlockWholeNotepad();
+		LogMessage("Notepad unlocked!");
+	}
+
+	// Increases the backpack weight to 999
+	public static void IncreaseBackpackWeight()
+	{
+		var backpack = InventoryBackpack.Get();
+		backpack.m_MaxWeight = 999f;
+		LogMessage("Backpack weight increased to 999!");
+		LogMessage("To prevent errors, save the game only when the backpack weight is <= 50");
+	}
+
+	public static void LogItemInfo(ArraySegment<string> args)
+	{
+		if (args.Count < 2)
+		{
+			LogMessage("Teleport requires additional argument: ItemID");
+			return;
+		}
+
+		if (!ParseEnum(args[1], out Enums.ItemID itemId))
+		{
+			LogMessage(string.Format("ItemId `{0}` does not exist, refer to \"spawn help\"", args[1]));
+			return;
+		}
+
+		GetProps(itemId);
+	}
+
+	private static void GetProps(Enums.ItemID itemId)
+	{
+		var manager = ItemsManager.Get();
+		var item = manager.CreateItem(itemId, false);
+		var backpack = InventoryBackpack.Get();
+		backpack.InsertItem(item, null, null, true, true, true, true, true);
+		var itemInfo = item.m_Info;
+		var props = itemInfo.GetType().GetProperties();
+		var sb = new StringBuilder();
+		sb.AppendLine();
+		sb.AppendLine("Type: " + itemInfo.GetType().Name);
+		foreach (var prop in props)
+		{
+			var value = prop.GetValue(itemInfo);
+			if (value == null)
+			{
+				continue;
+			}
+			sb.Append(prop.Name)
+			  .Append(": ")
+			  .AppendLine(value.ToString());
+		}
+		LogMessage(sb.ToString());
+	}
+	#endregion
+
+	#region Teleportation
+	// Teleports the player to the specified coordinates
+	public static void Teleport(ArraySegment<string> args)
+	{
+		if (args.Count == 2 && SavedLocationsManager.TryGetLocation(args[1], out Vector3 newPos))
+		{
+			TeleportInternal(newPos);
+			return;
+		}
+
+		if (args.Count < 3)
+		{
+			LogMessage("Teleport requires additional arguments: [optional=offset] [latitude] [longitude]");
+			return;
+		}
+
+		if (args.Count == 3)
+		{
+			TeleportToCoordinates(args[1], args[2]);
+			return;
+		}
+
+		if (Equals(args[1], "offset"))
+		{
+			TeleportOffset(args[2], args[3]);
+			return;
+		}
+
+		LogMessage("Teleportation arguments invalid.");
+	}
+
+	private static void TeleportToCoordinates(string @lat, string @long)
+	{
+		if (!float.TryParse(@lat, out float latitude))
+		{
+			LogMessage(string.Format("Invalid argument for 'latitude': {0}", @lat));
+			return;
+		}
+
+		if (!float.TryParse(@long, out float longitude))
+		{
+			LogMessage(string.Format("Invalid argument for 'longitude': {0}", @long));
+			return;
+		}
+
+		// calculate new position
+		const float latModifier = 40.8185f;
+		const float longModifier = 36.4861f;
+		float positionLat = (latitude - 57f) * latModifier * -1f + latModifier * 0.5f;
+		float positionLong = (longitude - 64f) * longModifier * -1f + longModifier * 0.5f;
+		var newPos = new Vector3(positionLat, 5f, positionLong);
+
+		// Teleport player
+		TeleportInternal(newPos);
+	}
+
+	private static void TeleportOffset(string @lat, string @long)
+	{
+		if (!float.TryParse(@lat, out float latitude))
+		{
+			LogMessage(string.Format("Invalid argument for 'latitude': {0}", @lat));
+			return;
+		}
+
+		if (!float.TryParse(@long, out float longitude))
+		{
+			LogMessage(string.Format("Invalid argument for 'longitude': {0}", @long));
+			return;
+		}
+
+		// calculate new position
+		var player = Player.Get();
+		var position = player.transform.position;
+		var newPos = new Vector3(position.x + latitude, 5f, position.z + longitude);
+
+		// Teleport player
+		TeleportInternal(newPos);
+	}
+
+	private static void TeleportInternal(Vector3 position)
+	{
+		var player = Player.Get();
+		var rotation = player.transform.rotation;
+		player.TeleportTo(position, rotation, false);
+		LogMessage(string.Format("Teleported to: {0}", position));
+	}
+
+	public static void AddSavedLocation(ArraySegment<string> args)
+	{
+		if (args.Count < 2)
+		{
+			LogMessage("Save location requires additional arguments: [locationName] (optional)[remove]");
+			return;
+		}
+
+		if (args.Count == 3 && Equals(args[2], "remove"))
+		{
+			LogMessage(SavedLocationsManager.AddLocation(args[1], Vector3.zero));
+			return;
+		}
+
+		if (Equals(args[1], "list"))
+		{
+			LogMessage(SavedLocationsManager.ListSavedLocations());
+			return;
+		}
+
+		var player = Player.Get();
+		var position = player.transform.position;
+		LogMessage(SavedLocationsManager.AddLocation(args[1], position));
+	}
+	#endregion
+}
+
+public static class ItemAliasManager
+{
+	private static Dictionary<string, Enums.ItemID> _itemAliases;
+	private static readonly string BaseFolder = Application.dataPath;
+	private static readonly string AliasesPath = Path.Combine(BaseFolder, "SpawnAliases.csv");
+
+	static ItemAliasManager()
+	{
+		_itemAliases = new Dictionary<string, Enums.ItemID>(StringComparer.OrdinalIgnoreCase);
+		LoadAliases();
+	}
+
+	private static void LoadAliases()
+	{
+		if (!File.Exists(AliasesPath))
+		{
+			LogMessage("Aliases file does not exist - loading aborted");
+			return;
+		}
+		var csv = File.ReadAllLines(AliasesPath);
+		foreach (var line in csv)
+		{
+			var kv = line.Split(',');
+			if (!ParseEnum(kv[1], out Enums.ItemID itemId))
+			{
+				LogMessage(string.Format("Failed to parse item id from alias file at line: {0}", line));
+				continue;
+			}
+			_itemAliases[kv[0]] = itemId;
+		}
+		if (_itemAliases.Count == 0)
+		{
+			LogMessage("No item aliases loaded");
+			return;
+		}
+		LogMessage("Loaded item aliases");
+	}
+
+	private static void SaveItemAliases()
+	{
+		var csv = new string[_itemAliases.Count];
+		var i = 0;
+		foreach (var kv in _itemAliases)
+		{
+			csv[i++] = string.Format("{0},{1}", kv.Key, kv.Value);
+		}
+		File.WriteAllLines(AliasesPath, csv);
+	}
+
+	public static bool TryGetAlias(string alias, out Enums.ItemID itemID)
+	{
+		return _itemAliases.TryGetValue(alias, out itemID);
+	}
+
+	public static string AddAlias(string alias, Enums.ItemID itemID)
+	{
+		if (itemID != Enums.ItemID.None)
+		{
+			_itemAliases[alias] = itemID;
+			SaveItemAliases();
+			return string.Format("Added alias {0} for item {1}", alias, itemID);
+		}
+		// None is deletion
+		if (!_itemAliases.ContainsKey(alias))
+		{
+			return string.Format("Alias {0} does not exist", alias);
+		}
+		_itemAliases.Remove(alias);
+		SaveItemAliases();
+		return string.Format("Removed alias {0}", alias);
+	}
+
+	public static string ListSavedAliases()
+	{
+		if (_itemAliases.Count == 0)
+		{
+			return "No aliases saved...";
+		}
+		var sb = new StringBuilder();
+		foreach (var kv in _itemAliases)
+		{
+			sb.AppendLine(string.Format("'{0}': {1}", kv.Key, kv.Value));
+		}
+		return sb.ToString();
+	}
+}
+
+public static class SavedLocationsManager
+{
+	private static Dictionary<string, Vector3> _savedLocations;
+	private static readonly string BaseFolder = Application.dataPath;
+	private static readonly string SavedLocationsPath = Path.Combine(BaseFolder, "SavedLocations.csv");
+
+	static SavedLocationsManager()
+	{
+		_savedLocations = new Dictionary<string, Vector3>(StringComparer.OrdinalIgnoreCase);
+		LoadSavedLocations();
+	}
+
+	private static void LoadSavedLocations()
+	{
+		if (!File.Exists(SavedLocationsPath))
+		{
+			LogMessage("Saved locations file does not exist - loading aborted");
+			return;
+		}
+		var csv = File.ReadAllLines(SavedLocationsPath);
+		foreach (var line in csv)
+		{
+			var kv = line.Split(',');
+			if (!float.TryParse(kv[1], out float @lat))
+			{
+				LogMessage("Failed to parse latitude from saved locations file: " + line);
+				continue;
+			}
+			if (!float.TryParse(kv[2], out float @alt))
+			{
+				LogMessage("Failed to parse altitude from saved locations file: " + line);
+				continue;
+			}
+			if (!float.TryParse(kv[3], out float @long))
+			{
+				LogMessage("Failed to parse longitude from saved locations file: " + line);
+				continue;
+			}
+			_savedLocations[kv[0]] = new Vector3(@lat, @alt, @long);
+		}
+		if (_savedLocations.Count == 0)
+		{
+			LogMessage("No item aliases loaded");
+			return;
+		}
+		LogMessage("Loaded item aliases");
+	}
+
+	private static void SaveLocations()
+	{
+		var csv = new string[_savedLocations.Count];
+		var i = 0;
+		foreach (var kv in _savedLocations)
+		{
+			var vector = kv.Value;
+			//    lat,alt,long
+			csv[i++] = string.Format("{0},{1},{2},{3}", kv.Key, vector.x, vector.y, vector.z);
+		}
+		File.WriteAllLines(SavedLocationsPath, csv);
+	}
+
+	public static bool TryGetLocation(string name, out Vector3 location)
+	{
+		return _savedLocations.TryGetValue(name, out location);
+	}
+
+	public static string AddLocation(string name, Vector3 location)
+	{
+		if (location != Vector3.zero)
+		{
+			_savedLocations[name] = location;
+			SaveLocations();
+			return string.Format("Added location {0} at {1}", name, location);
+		}
+		// None is deletion
+		if (!_savedLocations.ContainsKey(name))
+		{
+			return string.Format("Location {0} does not exist", name);
+		}
+		_savedLocations.Remove(name);
+		SaveLocations();
+		return string.Format("Removed location {0}", name);
+	}
+
+	public static string ListSavedLocations()
+	{
+		if (_savedLocations.Count == 0)
+		{
+			return "No saved locations found...";
+		}
+		var sb = new StringBuilder();
+		foreach (var kv in _savedLocations)
+		{
+			sb.AppendLine(string.Format("'{0}': {1}", kv.Key, kv.Value));
+		}
+		return sb.ToString();
+	}
+}
+
+public static class SpawnExtensions
+{
+	// parses the item id from the string, disregards case, and verifies result is defined
+	public static bool ParseEnum<T>(string arg, out T @enum) where T : struct, Enum
+	{
+		return Enum.TryParse(arg, true, out @enum) && Enum.IsDefined(typeof(T), @enum);
+	}
+
+	// compares two strings disregarding case
+	public static bool Equals(string a, string b)
+	{
+		return string.Compare(a, b, true) == 0;
+	}
+
+	public static readonly string DesktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+
+	private static readonly string _logPath = Path.Combine(DesktopPath, "SpawnLog.log");
+
+	private static bool _logToDesktop = false;
+
+	public static void ToggleLogToDesktop()
+	{
+		_logToDesktop = !_logToDesktop;
+		LogMessage(string.Format("Log to desktop: {0}", _logToDesktop));
+	}
+
+	public static void LogMessage(string message)
+	{
+		Debug.Log(message);
+		if (!_logToDesktop)
+		{
+			return;
+		}
+		var time = DateTime.Now.ToString();
+		var output = string.Format("[{0}]: {1}\n", time, message);
+		File.AppendAllText(_logPath, output);
+	}
 }
