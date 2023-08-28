@@ -1,12 +1,10 @@
-﻿using System.Numerics;
-using System.Text.RegularExpressions;
-using System.Net;
+﻿using System.Net;
 using System.Collections.Generic;
 using System.Text;
 using System;
 using System.IO;
 using UnityEngine;
-using System.Reflection;
+using SpawnComponents;
 using static SpawnExtensions;
 
 public class Spawn : Mod
@@ -19,19 +17,16 @@ public class Spawn : Mod
 		{
 			sb.AppendLine(command);
 		}
-		sb.AppendLine();
-		sb.AppendLine("Special Items:");
-		foreach (var item in SpecialItemMap.Keys)
-		{
-			sb.AppendLine(item);
-		}
-		sb.AppendLine();
+		sb.AppendLine()
+            .AppendLine("Special Items:")
+            .AppendLine(ItemsSpawnManager.GetSpecialItemNames())
+            .AppendLine();
 		return sb.ToString();
 	}
 
 	public void Start()
 	{
-		Debug.Log("Mod Spawn has been loaded!");
+		LogMessage("Mod Spawn has been loaded!");
 	}
 
 	// Exports the help to a text file on the desktop
@@ -44,11 +39,11 @@ public class Spawn : Mod
 			File.AppendAllText(path, "ItemIds:\n\n");
 			var itemIds = Enum.GetNames(typeof(Enums.ItemID));
 			File.AppendAllLines(path, itemIds);
-			Log(string.Format("help exported to: {0}", path));
+			LogMessage(string.Format("help exported to: {0}", path));
 		}
 		catch (Exception e)
 		{
-			Log(string.Format("Error while exporting item ids: `{0}`\nStackTrace: {1}", e.Message, e.StackTrace));
+			LogMessage(string.Format("Error while exporting item ids: `{0}`\nStackTrace: {1}", e.Message, e.StackTrace));
 		}
 	}
 
@@ -63,7 +58,7 @@ public class Spawn : Mod
 
 		if (string.IsNullOrWhiteSpace(args[0]))
 		{
-			Log("Empty ItemId is invalid!");
+			LogMessage("Empty ItemId is invalid!");
 			return;
 		}
 
@@ -87,7 +82,7 @@ public class Spawn : Mod
 
 	public void OnModUnload()
 	{
-		Log("Mod Spawn has been unloaded!");
+		LogMessage("Mod Spawn has been unloaded!");
 	}
 
 	private static readonly Dictionary<string, Action<ArraySegment<string>>> SpecialCommands = new Dictionary<string, Action<ArraySegment<string>>>(StringComparer.OrdinalIgnoreCase) {

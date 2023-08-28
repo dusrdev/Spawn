@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Text;
+using System.IO;
+using UnityEngine;
 
 public static class SpawnExtensions
 {
@@ -26,10 +28,10 @@ public static class SpawnExtensions
 	public static void ToggleLogToDesktop()
 	{
 		_logToDesktop = !_logToDesktop;
-		Log(string.Format("Log to desktop: {0}", _logToDesktop));
+		LogMessage(string.Format("Log to desktop: {0}", _logToDesktop));
 	}
 
-	public static void Log(string message)
+	public static void LogMessage(string message)
 	{
 		Debug.Log(message);
 		if (!_logToDesktop)

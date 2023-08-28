@@ -6,89 +6,92 @@ using System.IO;
 using UnityEngine;
 using static SpawnExtensions;
 
-public static class ItemAliasManager
+namespace SpawnComponents
 {
-    private static Dictionary<string, Enums.ItemID> _itemAliases;
-    private static readonly string BaseFolder = Application.dataPath;
-    private static readonly string AliasesPath = Path.Combine(BaseFolder, "SpawnAliases.csv");
-
-    static ItemAliasManager()
+    public static class ItemAliasManager
     {
-        _itemAliases = new Dictionary<string, Enums.ItemID>(StringComparer.OrdinalIgnoreCase);
-        LoadAliases();
-    }
+        private static Dictionary<string, Enums.ItemID> _itemAliases;
+        private static readonly string BaseFolder = Application.dataPath;
+        private static readonly string AliasesPath = Path.Combine(BaseFolder, "SpawnAliases.csv");
 
-    private static void LoadAliases()
-    {
-        if (!File.Exists(AliasesPath))
+        static ItemAliasManager()
         {
-            Spawn.Log("Aliases file does not exist - loading aborted");
-            return;
+            _itemAliases = new Dictionary<string, Enums.ItemID>(StringComparer.OrdinalIgnoreCase);
+            LoadAliases();
         }
-        var csv = File.ReadAllLines(AliasesPath);
-        foreach (var line in csv)
+
+        private static void LoadAliases()
         {
-            var kv = line.Split(',');
-            if (!ParseEnum(kv[1], out Enums.ItemID itemId))
+            if (!File.Exists(AliasesPath))
             {
-                Spawn.Log("Failed to parse item id from alias file: " + line);
-                continue;
+                LogMessage("Aliases file does not exist - loading aborted");
+                return;
             }
-            _itemAliases[kv[0]] = itemId;
+            var csv = File.ReadAllLines(AliasesPath);
+            foreach (var line in csv)
+            {
+                var kv = line.Split(',');
+                if (!ParseEnum(kv[1], out Enums.ItemID itemId))
+                {
+                    LogMessage(string.Format("Failed to parse item id from alias file at line: {0}", line));
+                    continue;
+                }
+                _itemAliases[kv[0]] = itemId;
+            }
+            if (_itemAliases.Count == 0)
+            {
+                LogMessage("No item aliases loaded");
+                return;
+            }
+            LogMessage("Loaded item aliases");
         }
-        if (_itemAliases.Count == 0)
+
+        private static void SaveItemAliases()
         {
-            Spawn.Log("No item aliases loaded");
-            return;
+            var csv = new string[_itemAliases.Count];
+            var i = 0;
+            foreach (var kv in _itemAliases)
+            {
+                csv[i++] = string.Format("{0},{1}", kv.Key, kv.Value);
+            }
+            File.WriteAllLines(AliasesPath, csv);
         }
-        Spawn.Log("Loaded item aliases");
-    }
 
-    private static void SaveItemAliases()
-    {
-        var csv = new string[_itemAliases.Count];
-        var i = 0;
-        foreach (var kv in _itemAliases)
+        public static bool TryGetAlias(string alias, out Enums.ItemID itemID)
         {
-            csv[i++] = string.Format("{0},{1}", kv.Key, kv.Value);
+            return _itemAliases.TryGetValue(alias, out itemID);
         }
-        File.WriteAllLines(AliasesPath, csv);
-    }
 
-    public static bool TryGetAlias(string alias, out Enums.ItemID itemID)
-    {
-        return _itemAliases.TryGetValue(alias, out itemID);
-    }
-
-    public static string AddAlias(string alias, Enums.ItemID itemID)
-    {
-        if (itemID != Enums.ItemID.None)
+        public static string AddAlias(string alias, Enums.ItemID itemID)
         {
-            _itemAliases[alias] = itemID;
+            if (itemID != Enums.ItemID.None)
+            {
+                _itemAliases[alias] = itemID;
+                SaveItemAliases();
+                return string.Format("Added alias {0} for item {1}", alias, itemID);
+            }
+            // None is deletion
+            if (!_itemAliases.ContainsKey(alias))
+            {
+                return string.Format("Alias {0} does not exist", alias);
+            }
+            _itemAliases.Remove(alias);
             SaveItemAliases();
-            return string.Format("Added alias {0} for item {1}", alias, itemID);
+            return string.Format("Removed alias {0}", alias);
         }
-        // None is deletion
-        if (!_itemAliases.ContainsKey(alias))
-        {
-            return string.Format("Alias {0} does not exist", alias);
-        }
-        _itemAliases.Remove(alias);
-        SaveItemAliases();
-        return string.Format("Removed alias {0}", alias);
-    }
 
-    public static string ListSavedAliases()
-    {
-        if (_itemAliases.Count == 0)
+        public static string ListSavedAliases()
         {
-            return "No aliases saved...";
+            if (_itemAliases.Count == 0)
+            {
+                return "No aliases saved...";
+            }
+            var sb = new StringBuilder();
+            foreach (var kv in _itemAliases)
+            {
+                sb.AppendLine(string.Format("'{0}': {1}", kv.Key, kv.Value));
+            }
+            return sb.ToString();
         }
-        var sb = new StringBuilder();
-        foreach (var kv in _itemAliases)
-        {
-            sb.AppendLine(string.Format("'{0}': {1}", kv.Key, kv.Value));
-        }
-        return sb.ToString();
     }
 }
