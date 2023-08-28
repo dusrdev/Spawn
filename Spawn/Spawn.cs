@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Numerics;
+using System.Text.RegularExpressions;
 using System.Net;
 using System.Collections.Generic;
 using System.Text;
@@ -36,7 +37,7 @@ public class Spawn : Mod
 	private static readonly string DesktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
 
 	// Exports the help to a text file on the desktop
-	public static void ExportHelpText()
+	private static void ExportHelpText()
 	{
 		try
 		{
@@ -55,7 +56,7 @@ public class Spawn : Mod
 
 
 	[ConsoleCommand("spawn", "spawn [ID/help/log] [Quantity/rm] [MaxDistance/debug]")]
-	public static void Command(string[] args)
+	private static void Command(string[] args)
 	{
 		if (args.Length == 0)
 		{
@@ -103,7 +104,7 @@ public class Spawn : Mod
 			return;
 		}
 
-		if (ItemAliasManager.TryGetNickname(args[0], out Enums.ItemID aliasedItemId))
+		if (ItemAliasManager.TryGetAlias(args[0], out Enums.ItemID aliasedItemId))
 		{
 			SpawnItemInternal(aliasedItemId, args);
 			return;
@@ -151,7 +152,7 @@ public class Spawn : Mod
 		item.ItemsManagerRegister(true);
 	}
 
-	public static void RemoveItem(ArraySegment<string> args)
+	private static void RemoveItem(ArraySegment<string> args)
 	{
 		if (!ParseEnum(args[0], out Enums.ItemID itemId))
 		{
@@ -251,7 +252,7 @@ public class Spawn : Mod
 	}
 
 	// Toggles rain on/off
-	public static void ToggleRain()
+	private static void ToggleRain()
 	{
 		var manager = RainManager.Get();
 		if (manager.IsRain())
@@ -265,7 +266,7 @@ public class Spawn : Mod
 	}
 
 	// Unlocks the whole notepad
-	public static void UnlockNotepad()
+	private static void UnlockNotepad()
 	{
 		var manager = ItemsManager.Get();
 		manager.UnlockWholeNotepad();
@@ -273,7 +274,7 @@ public class Spawn : Mod
 	}
 
 	// Increases the backpack weight to 999
-	public static void IncreaseBackpackWeight()
+	private static void IncreaseBackpackWeight()
 	{
 		var backpack = InventoryBackpack.Get();
 		backpack.m_MaxWeight = 999f;
@@ -281,48 +282,15 @@ public class Spawn : Mod
 		Log("To prevent errors, save the game only when the backpack weight is <= 50");
 	}
 
-	// Gives the player all diseases and most wounds
-	// Used for the "Mr... I don't feel so good" achievement
-	public static void GetThePlague() {
-		var diseasesModule = PlayerDiseasesModule.Get();
-		diseasesModule.RequestDisease(Enums.ConsumeEffect.Fever, 0f, 1, 1);
-		diseasesModule.RequestDisease(Enums.ConsumeEffect.FoodPoisoning, 1f, 2, 1);
-		diseasesModule.RequestDisease(Enums.ConsumeEffect.ParasiteSickness, 1f, 2, 1);
-		diseasesModule.RequestDisease(Enums.ConsumeEffect.DirtSickness, 0f, 2, 1);
-		diseasesModule.RequestDisease(Enums.ConsumeEffect.Insomnia, 0f, 2, 1);
-		var bodyInspectionController = BodyInspectionController.Get();
-		var injuryModule = PlayerInjuryModule.Get();
-		// Leech
-		var leechPlace = Enums.InjuryPlace.LHand;
-		var leechInjuryType = Enums.InjuryType.Leech;
-		var leechSlot = bodyInspectionController.GetFreeWoundSlot(leechPlace, leechInjuryType);
-		injuryModule.AddInjury(leechInjuryType, leechPlace, leechSlot, Enums.InjuryState.Closed);
-		var leechSlot2 = bodyInspectionController.GetFreeWoundSlot(leechPlace, leechInjuryType);
-		injuryModule.AddInjury(leechInjuryType, leechPlace, leechSlot2, Enums.InjuryState.Closed);
-		// Laceration
-		var lacerationInjuryType = Enums.InjuryType.Laceration;
-		var lacerationSlot = bodyInspectionController.GetFreeWoundSlot(leechPlace, lacerationInjuryType);
-		injuryModule.AddInjury(lacerationInjuryType, leechPlace, lacerationSlot, Enums.InjuryState.Bleeding);
-		// Worm
-		var wormPlace = Enums.InjuryPlace.RHand;
-		var wormInjuryType = Enums.InjuryType.Worm;
-		var wormSlot = bodyInspectionController.GetFreeWoundSlot(wormPlace, wormInjuryType);
-		injuryModule.AddInjury(wormInjuryType, wormPlace, wormSlot, Enums.InjuryState.WormInside);
-		// Rash
-		var rashPlace = Enums.InjuryPlace.LLeg;
-		var rashInjuryType = Enums.InjuryType.Rash;
-		var rashSlot = bodyInspectionController.GetFreeWoundSlot(rashPlace, rashInjuryType);
-		injuryModule.AddInjury(rashInjuryType, rashPlace, rashSlot, Enums.InjuryState.Closed);
-		// Poison
-		var poisonPlace = Enums.InjuryPlace.RLeg;
-		var poisonInjuryType = Enums.InjuryType.SnakeBite;
-		var poisonSlot = bodyInspectionController.GetFreeWoundSlot(poisonPlace, poisonInjuryType);
-		injuryModule.AddInjury(poisonInjuryType, poisonPlace, poisonSlot, Enums.InjuryState.Open, 3);
-	}
-
 	// Teleports the player to the specified coordinates
-	public static void Teleport(ArraySegment<string> args)
+	private static void Teleport(ArraySegment<string> args)
 	{
+		if (args.Count == 2 && SavedLocationManager.TryGetLocation(args[1], out Vector3 newPos))
+		{
+			TeleportInternal(newPos);
+			return;
+		}
+
 		if (args.Count < 3)
 		{
 			Log("Teleport requires 2 additional arguments: latitude, longitude");
@@ -341,9 +309,6 @@ public class Spawn : Mod
 			return;
 		}
 
-		// get player position
-		var player = Player.Get();
-
 		// calculate new position
 		const float latModifier = 40.8185f;
 		const float longModifier = 36.4861f;
@@ -352,13 +317,18 @@ public class Spawn : Mod
 		var newPos = new Vector3(positionLat, 5f, positionLong);
 
 		// Teleport player
-		var rotation = player.transform.rotation;
-		player.TeleportTo(newPos, rotation, false);
+		TeleportInternal(newPos);
+	}
 
+	private static void TeleportInternal(Vector3 position)
+	{
+		var player = Player.Get();
+		var rotation = player.transform.rotation;
+		player.TeleportTo(position, rotation, false);
 		Log(string.Format("Teleported to: {0}", newPos));
 	}
 
-	public static void LogItemInfo(ArraySegment<string> args)
+	private static void LogItemInfo(ArraySegment<string> args)
 	{
 		if (args.Count < 2)
 		{
@@ -375,7 +345,7 @@ public class Spawn : Mod
 		GetProps(itemId);
 	}
 
-	public static void AddItemAlias(ArraySegment<string> args)
+	private static void AddItemAlias(ArraySegment<string> args)
 	{
 		if (args.Count < 2)
 		{
@@ -385,7 +355,12 @@ public class Spawn : Mod
 
 		if (args.Count == 2)
 		{
-			Log(ItemAliasManager.AddNickname(args[1], Enums.ItemID.None));
+			if (Equals(args[1], "list"))
+			{
+				Log(ItemAliasManager.ListSavedAliases());
+				return;
+			}
+			Log(ItemAliasManager.AddAlias(args[1], Enums.ItemID.None));
 			return;
 		}
 
@@ -395,7 +370,32 @@ public class Spawn : Mod
 			return;
 		}
 
-		Log(ItemAliasManager.AddNickname(args[1], itemId));
+		Log(ItemAliasManager.AddAlias(args[1], itemId));
+	}
+
+	private static void AddSavedLocation(ArraySegment<string> args)
+	{
+		if (args.Count < 2)
+		{
+			Log("Save location requires additional arguments: [locationName] (optional)[remove]");
+			return;
+		}
+
+		if (args.Count == 3 && Equals(args[2], "remove"))
+		{
+			Log(SavedLocationManager.AddLocation(args[1], Vector3.zero));
+			return;
+		}
+
+		if (Equals(args[1], "list"))
+		{
+			Log(SavedLocationManager.ListSavedLocations());
+			return;
+		}
+
+		var player = Player.Get();
+		var position = player.transform.position;
+		Log(SavedLocationManager.AddLocation(args[1], position));
 	}
 
 	private static void RestoreSpecialItems()
@@ -438,7 +438,7 @@ public class Spawn : Mod
 	}
 
 	// Modifies weapons - Infinite Damage and Durability
-	public static void ModifyWeapon(WeaponInfo itemInfo)
+	private static void ModifyWeapon(WeaponInfo itemInfo)
 	{
 		itemInfo.m_Mass = 0.1f;
 		itemInfo.m_DamageSelf = 1E-45f; // Smallest number that is greater than 0
@@ -453,7 +453,7 @@ public class Spawn : Mod
 	}
 
 	// Modifies an item with max throw force and damage
-	public static void ModifyThrowable(ItemInfo itemInfo)
+	private static void ModifyThrowable(ItemInfo itemInfo)
 	{
 		itemInfo.m_Mass = 0.1f;
 		itemInfo.m_ThrowForce = 480f;
@@ -461,14 +461,14 @@ public class Spawn : Mod
 	}
 
 	// Modifies containers - Capacity = 1000
-	public static void ModifyContainer(LiquidContainerInfo itemInfo)
+	private static void ModifyContainer(LiquidContainerInfo itemInfo)
 	{
 		itemInfo.m_Capacity = 1000f;
 		itemInfo.m_Mass = 0.1f;
 	}
 
 	// Modifies the stats of a firestarter
-	public static void ModifyFireStarter(ItemToolInfo itemInfo)
+	private static void ModifyFireStarter(ItemToolInfo itemInfo)
 	{
 		itemInfo.m_Mass = 0.1f;
 		itemInfo.m_HealthLossPerSec = 1E-45f;
@@ -477,7 +477,7 @@ public class Spawn : Mod
 	}
 
 	// Modifies foods - All stats
-	public static void ModifyFood(FoodInfo itemInfo)
+	private static void ModifyFood(FoodInfo itemInfo)
 	{
 		itemInfo.m_Mass = 0.1f;
 		itemInfo.m_SpoilTime = -1f;
@@ -580,8 +580,8 @@ public class Spawn : Mod
 		{ "IncreaseBackpackWeight", args => IncreaseBackpackWeight() },
 		{ "Teleport", args => Teleport(args) },
 		{ "Alias", args => AddItemAlias(args) },
+		{ "SaveLocation", args => AddSavedLocation(args) },
 		{ "ItemInfo", args => LogItemInfo(args) },
-		{ "GetThePlague", args => GetThePlague() },
 	};
 
 	private static readonly Dictionary<string, Action> SpecialItemMap = new Dictionary<string, Action>(StringComparer.OrdinalIgnoreCase) {
