@@ -10,6 +10,7 @@
 * **spawn SaveLocation [locationName] remove** - remove the requested location
 * **spawn Teleport [savedLocationName]** - this will teleport the player to the desired saved location
 * **spawn Teleport [latitude] [longitude]** - this will teleport the player to the desired location
+* **spawn Teleport offset [latitude] [longitude]** - this will teleport the player to the offset location
 * **spawn Rain** - Will toggle between start and stop rain (depending on the current weather)
 * **spawn IncreaseBackPackWeight** - Will increase the max weight of the backpack to 999.
 * **spawn Alias [alias] [id]** - this will save an alias for an item id, so you don't have to remember complicated item names, these aliases are stored in a file and will be re-loaded with the mod, so they are persistent. If you repeat the command with a different [id] the alias will be overridden.
@@ -18,9 +19,9 @@
 * **spawn ItemInfo [id]** - This will log all the properties inside the ItemInfo for that specific item.
 * **spawn [id/alias]** - this will spawn the item with the corresponding [id]
 * **spawn [id/alias] [quantity]** - this will spawn multiples of the item, only applicable to items that can be places inside the backpack.
-* **spawn [id] rm** - this will destroy all items with that [id] in radius of 5 (approximately 2.5 meters/yards)
-* **spawn [id] rm [maxDistance]** - this is same as last one but can configure distance
-* **spawn [id] rm debug** - this will list all found items with their positions and distances but **NOT REMOVE THEM**
+* **spawn [id/alias] rm** - this will destroy all items with that [id] in radius of 5 (approximately 2.5 meters/yards)
+* **spawn [id/alias] rm [maxDistance]** - this is same as last one but can configure distance
+* **spawn [id/alass] rm debug** - this will list all found items with their positions and distances but **NOT REMOVE THEM**
 * **spawn [specialItem]** - this will spawn an existing item but with modified stats
 * **spawn [specialItem] [quantity]** - this will spawn multiples of the special item
 * **spawn RestoreSpecialItems** - this will attempt to restore the properties of the special items it can find in the backpack, Other items with the same id will also be granted the same properties. So either use other items for regular things, or spawn and destroy the special items according to usage.

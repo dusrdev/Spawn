@@ -16,4 +16,28 @@ public static class SpawnExtensions
 	{
 		return string.Compare(a, b, true) == 0;
 	}
+
+	public static readonly string DesktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+
+	private static readonly string _logPath = Path.Combine(DesktopPath, "SpawnLog.log");
+
+	private static bool _logToDesktop = false;
+
+	public static void ToggleLogToDesktop()
+	{
+		_logToDesktop = !_logToDesktop;
+		Log(string.Format("Log to desktop: {0}", _logToDesktop));
+	}
+
+	public static void Log(string message)
+	{
+		Debug.Log(message);
+		if (!_logToDesktop)
+		{
+			return;
+		}
+		var time = DateTime.Now.ToString();
+		var output = string.Format("[{0}]: {1}\n", time, message);
+		File.AppendAllText(_logPath, output);
+	}
 }
