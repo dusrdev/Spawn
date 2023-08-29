@@ -53,12 +53,13 @@ public class Spawn : Mod
 	{
 		if (args.Length == 0)
 		{
+			LogMessage("Spawn command received no arguments...");
 			return;
 		}
 
 		if (string.IsNullOrWhiteSpace(args[0]))
 		{
-			LogMessage("Empty ItemId is invalid!");
+			LogMessage("Empty ItemId/Command is invalid!");
 			return;
 		}
 
@@ -92,10 +93,12 @@ public class Spawn : Mod
 		{ "RestoreSpecialItems", args => RestoreSpecialItems() },
 		{ "UnlockNotepad", args => UnlockNotepad() },
 		{ "IncreaseBackpackWeight", args => IncreaseBackpackWeight() },
-		{ "Teleport", args => Teleport(args) },
-		{ "Alias", args => AddItemAlias(args) },
-		{ "SaveLocation", args => AddSavedLocation(args) },
-		{ "ItemInfo", args => LogItemInfo(args) },
+		{ "Teleport", args => Teleport(args.Slice(1)) },
+		{ "Alias", args => AddItemAlias(args.Slice(1)) },
+		{ "SaveLocation", args => AddSavedLocation(args.Slice(1)) },
+		{ "ItemInfo", args => LogItemInfo(args.Slice(1)) },
+		{ "SetTime", args => SetDayTime(args.Slice(1)) },
+		{ "ProgressTime", args => TimeProgress(args.Slice(1)) },
 	};
 
 	#region Spawn and Remove
@@ -392,32 +395,38 @@ public class Spawn : Mod
 		}
 	}
 
+	// Adds an item alias to the list
+	// alias [alias] [itemId=emptyToRemove]
 	public static void AddItemAlias(ArraySegment<string> args)
 	{
-		if (args.Count < 2)
+		if (args.Count < 1)
 		{
 			LogMessage("Teleport requires additional arguments: [alias] [itemId=emptyToRemove]");
 			return;
 		}
 
-		if (args.Count == 2)
+		// list or remove
+		if (args.Count == 1)
 		{
-			if (Equals(args[1], "list"))
+			// list existing aliases
+			if (Equals(args[0], "list"))
 			{
 				LogMessage(ItemAliasManager.ListSavedAliases());
 				return;
 			}
-			LogMessage(ItemAliasManager.AddAlias(args[1], Enums.ItemID.None));
+			// remove alias
+			LogMessage(ItemAliasManager.AddAlias(args[0], Enums.ItemID.None));
 			return;
 		}
 
-		if (!ParseEnum(args[2], out Enums.ItemID itemId))
+		// add alias
+		if (!ParseEnum(args[1], out Enums.ItemID itemId))
 		{
-			LogMessage(string.Format("ItemId `{0}` does not exist, refer to \"spawn help\"", args[2]));
+			LogMessage(string.Format("ItemId `{0}` does not exist, refer to \"spawn help\"", args[1]));
 			return;
 		}
 
-		LogMessage(ItemAliasManager.AddAlias(args[1], itemId));
+		LogMessage(ItemAliasManager.AddAlias(args[0], itemId));
 	}
 
 	private static readonly Dictionary<string, Action> SpecialItemMap = new Dictionary<string, Action>(StringComparer.OrdinalIgnoreCase)
@@ -486,17 +495,19 @@ public class Spawn : Mod
 		LogMessage("To prevent errors, save the game only when the backpack weight is <= 50");
 	}
 
+	// Logs the item info to the console
+	// itemInfo [itemId]
 	public static void LogItemInfo(ArraySegment<string> args)
 	{
-		if (args.Count < 2)
+		if (args.Count < 1)
 		{
 			LogMessage("Teleport requires additional argument: ItemID");
 			return;
 		}
 
-		if (!ParseEnum(args[1], out Enums.ItemID itemId))
+		if (!ParseEnum(args[0], out Enums.ItemID itemId))
 		{
-			LogMessage(string.Format("ItemId `{0}` does not exist, refer to \"spawn help\"", args[1]));
+			LogMessage(string.Format("ItemId `{0}` does not exist, refer to \"spawn help\"", args[0]));
 			return;
 		}
 
@@ -527,33 +538,99 @@ public class Spawn : Mod
 		}
 		LogMessage(sb.ToString());
 	}
+
+	// Starts or stops the progress of dayTime
+	// TimeProgress [true/false]
+	public static void TimeProgress(ArraySegment<string> args)
+	{
+		if (args.Count < 1)
+		{
+			LogMessage("TimeProgress requires additional argument: [true/false]");
+			return;
+		}
+
+		if (!bool.TryParse(args[0], out bool progress))
+		{
+			LogMessage(string.Format("`{0}` is invalid boolean!", args[0]));
+			return;
+		}
+
+		var level = MainLevel.Instance;
+
+		if (progress) {
+			level.StartDayTimeProgress();
+			LogMessage("Time progress started!");
+			return;
+		}
+
+		level.StopDayTimeProgress();
+		LogMessage("Time progress stopped!");
+	}
+
+	// Sets the time to requested time
+	// setDayTime [hour] [minutes]
+	public static void SetDayTime(ArraySegment<string> args)
+	{
+		if (args.Count < 2)
+		{
+			LogMessage("SetDayTime requires additional arguments: [hour] [minutes]");
+			return;
+		}
+
+		if (!int.TryParse(args[0], out int hour))
+		{
+			LogMessage(string.Format("Hour `{0}` is invalid!", args[0]));
+			return;
+		}
+
+		if (!int.TryParse(args[1], out int minutes))
+		{
+			LogMessage(string.Format("Minutes `{0}` is invalid!", args[1]));
+			return;
+		}
+
+		if (hour < 0 || hour > 23 || minutes < 0 || minutes > 59)
+		{
+			LogMessage("Arguments invalid, hour must be between 0 and 23, minutes between 0 and 59");
+			return;
+		}
+
+		var level = MainLevel.Instance;
+		level.SetDayTime(hour, minutes);
+		LogMessage(string.Format("Added {0} hours to the current time!", hour));
+	}
 	#endregion
 
 	#region Teleportation
 	// Teleports the player to the specified coordinates
+	// teleport [latitude] [longitude]
+	// teleport offset [latitude] [longitude]
+	// teleport [locationName]
 	public static void Teleport(ArraySegment<string> args)
 	{
-		if (args.Count == 2 && SavedLocationsManager.TryGetLocation(args[1], out Vector3 newPos))
+		if (args.Count == 1 && SavedLocationsManager.TryGetLocation(args[0], out Vector3 newPos))
 		{
 			TeleportInternal(newPos);
 			return;
 		}
 
-		if (args.Count < 3)
+		if (args.Count < 2)
 		{
 			LogMessage("Teleport requires additional arguments: [optional=offset] [latitude] [longitude]");
 			return;
 		}
 
-		if (args.Count == 3)
+		// Regular teleportation to coordinates
+		if (args.Count == 2)
 		{
-			TeleportToCoordinates(args[1], args[2]);
+			TeleportToCoordinates(args[0], args[1]);
 			return;
 		}
 
-		if (Equals(args[1], "offset"))
+		// Teleportation with offset
+		if (Equals(args[0], "offset"))
 		{
-			TeleportOffset(args[2], args[3]);
+			TeleportOffset(args[1], args[2]);
 			return;
 		}
 
@@ -612,33 +689,41 @@ public class Spawn : Mod
 	{
 		var player = Player.Get();
 		var rotation = player.transform.rotation;
-		player.TeleportTo(position, rotation, false);
+											// show_loading
+		player.TeleportTo(position, rotation, true);
 		LogMessage(string.Format("Teleported to: {0}", position));
 	}
 
+	// Saves the current player position to a file
+	// saveLocation list
+	// saveLocation [locationName]
+	// saveLocation [locationName] remove
 	public static void AddSavedLocation(ArraySegment<string> args)
 	{
-		if (args.Count < 2)
+		if (args.Count < 1)
 		{
-			LogMessage("Save location requires additional arguments: [locationName] (optional)[remove]");
+			LogMessage("Save location requires additional arguments: [locationName] ?[remove]");
 			return;
 		}
 
-		if (args.Count == 3 && Equals(args[2], "remove"))
+		// remove location
+		if (args.Count == 2 && Equals(args[1], "remove"))
 		{
-			LogMessage(SavedLocationsManager.AddLocation(args[1], Vector3.zero));
+			LogMessage(SavedLocationsManager.AddLocation(args[0], Vector3.zero));
 			return;
 		}
 
-		if (Equals(args[1], "list"))
+		// list saved locations
+		if (Equals(args[0], "list"))
 		{
 			LogMessage(SavedLocationsManager.ListSavedLocations());
 			return;
 		}
 
+		// save location
 		var player = Player.Get();
 		var position = player.transform.position;
-		LogMessage(SavedLocationsManager.AddLocation(args[1], position));
+		LogMessage(SavedLocationsManager.AddLocation(args[0], position));
 	}
 	#endregion
 }
