@@ -5,6 +5,8 @@
 * **spawn Help** - this will export HelpText to `SpawnHelp.txt` on desktop (with commands and all item ids)
 * **spawn ToggleLog** - switches logging to `SpawnLog.log` on desktop (off by default)
 * **spawn UnlockNotepad** - this will unlock the whole notepad (crafting, recipes, info...)
+* **spawn SetTime [Hour] [Minutes]** - This will set the clock to the desired time [24 hour format]
+* **spawn ProgressTime [true/false]** - This will start or stop time progression
 * **spawn SaveLocation list** - this will list the saved locations and their coordinates
 * **spawn SaveLocation [locationName]** - this will save the current location under the requested name
 * **spawn SaveLocation [locationName] remove** - remove the requested location
@@ -30,6 +32,7 @@
 
 #### Tools
 
+* `Knife` - metal_blade_weapon but with infinite durability and damage.
 * `First_Blade` - this will look like the Obsidian_Bone_Blade, but will have near infinite durability and will kill/destroy every object with one strike/throw.
 * `Lucifers_Spear` - this will look like the Obsidian_Spear, but will be able to kill any enemy/animal with one strike/throw.
 * `Kryptonite` - this is a small stone, but has way stronger throwing force and infinite damage, it will kill anything you throw it at with one blow.
