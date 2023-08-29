@@ -99,6 +99,7 @@ public class Spawn : Mod
 		{ "ItemInfo", args => LogItemInfo(args.Slice(1)) },
 		{ "SetTime", args => SetDayTime(args.Slice(1)) },
 		{ "ProgressTime", args => TimeProgress(args.Slice(1)) },
+		{ "IncreaseSkills", args => IncreaseSkills(args.Slice(1)) },
 	};
 
 	#region Spawn and Remove
@@ -557,7 +558,8 @@ public class Spawn : Mod
 
 		var level = MainLevel.Instance;
 
-		if (progress) {
+		if (progress)
+		{
 			level.StartDayTimeProgress();
 			LogMessage("Time progress started!");
 			return;
@@ -598,6 +600,64 @@ public class Spawn : Mod
 		var level = MainLevel.Instance;
 		level.SetDayTime(hour, minutes);
 		LogMessage(string.Format("Added {0} hours to the current time!", hour));
+	}
+
+	// Increases the skills of the player
+	// increaseSkills [amount]
+	public static void IncreaseSkills(ArraySegment<string> args)
+	{
+		if (args.Count < 1)
+		{
+			LogMessage("IncreaseSkills requires additional argument: [amount]");
+			return;
+		}
+
+		if (!int.TryParse(args[0], out int amount))
+		{
+			LogMessage(string.Format("'{0}' is invalid for argument 'amount'", args[0]));
+			return;
+		}
+
+		if (amount < 1)
+		{
+			LogMessage("Amount must be greater than 0");
+			return;
+		}
+
+		const float min = 0f;
+		const float max = 100f;
+		var fistSkill = Skill.Get<FistsSkill>();
+		fistSkill.m_Value = Mathf.Clamp(fistSkill.m_Value + amount, min, max);
+		var axeSkill = Skill.Get<AxeSkill>();
+		axeSkill.m_Value = Mathf.Clamp(axeSkill.m_Value + amount, min, max);
+		var bladeSkill = Skill.Get<BladeSkill>();
+		bladeSkill.m_Value = Mathf.Clamp(bladeSkill.m_Value + amount, min, max);
+		var spearSkill = Skill.Get<SpearSkill>();
+		spearSkill.m_Value = Mathf.Clamp(spearSkill.m_Value + amount, min, max);
+		var twoHandedSkill = Skill.Get<TwoHandedSkill>();
+		twoHandedSkill.m_Value = Mathf.Clamp(twoHandedSkill.m_Value + amount, min, max);
+		var craftingSkill = Skill.Get<CraftingSkill>();
+		craftingSkill.m_Value = Mathf.Clamp(craftingSkill.m_Value + amount, min, max);
+		var makeFireSkill = Skill.Get<MakeFireSkill>();
+		makeFireSkill.m_Value = Mathf.Clamp(makeFireSkill.m_Value + amount, min, max);
+		var cookingSkill = Skill.Get<CookingSkill>();
+		cookingSkill.m_Value = Mathf.Clamp(cookingSkill.m_Value + amount, min, max);
+		var archerySkill = Skill.Get<ArcherySkill>();
+		archerySkill.m_Value = Mathf.Clamp(archerySkill.m_Value + amount, min, max);
+		var throwingSkill = Skill.Get<ThrowingSkill>();
+		throwingSkill.m_Value = Mathf.Clamp(throwingSkill.m_Value + amount, min, max);
+		var fishingSkill = Skill.Get<FishingSkill>();
+		fishingSkill.m_Value = Mathf.Clamp(fishingSkill.m_Value + amount, min, max);
+		var harvestingAnimalsSkill = Skill.Get<HarvestingAnimalsSkill>();
+		harvestingAnimalsSkill.m_Value = Mathf.Clamp(harvestingAnimalsSkill.m_Value + amount, min, max);
+		var spearFishingSkill = Skill.Get<SpearFishingSkill>();
+		spearFishingSkill.m_Value = Mathf.Clamp(spearFishingSkill.m_Value + amount, min, max);
+		var potterySkill = Skill.Get<PotterySkill>();
+		potterySkill.m_Value = Mathf.Clamp(potterySkill.m_Value + amount, min, max);
+		var blowgunSkill = Skill.Get<BlowgunSkill>();
+		blowgunSkill.m_Value = Mathf.Clamp(blowgunSkill.m_Value + amount, min, max);
+
+		LogMessage(string.Format("Skills increased by {0}!", amount));
 	}
 	#endregion
 
@@ -689,7 +749,7 @@ public class Spawn : Mod
 	{
 		var player = Player.Get();
 		var rotation = player.transform.rotation;
-											// show_loading
+		// show_loading
 		player.TeleportTo(position, rotation, true);
 		LogMessage(string.Format("Teleported to: {0}", position));
 	}

@@ -15,6 +15,7 @@
 * **spawn Teleport offset [latitude] [longitude]** - this will teleport the player to the offset location
 * **spawn Rain** - Will toggle between start and stop rain (depending on the current weather)
 * **spawn IncreaseBackPackWeight** - Will increase the max weight of the backpack to 999.
+* **spawn IncreaseSkills [amount]** - This will increase all skills by the request amount.
 * **spawn Alias [alias] [id]** - this will save an alias for an item id, so you don't have to remember complicated item names, these aliases are stored in a file and will be re-loaded with the mod, so they are persistent. If you repeat the command with a different [id] the alias will be overridden.
 * **spawn Alias [alias]** - Without specifying an item id, the alias if exists, will be removed.
 * **spawn Alias list** - this will list the saved item aliases.
