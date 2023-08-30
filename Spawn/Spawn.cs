@@ -92,7 +92,6 @@ public class Spawn : Mod
 		{ "Rain", args => ToggleRain() },
 		{ "RestoreSpecialItems", args => RestoreSpecialItems() },
 		{ "UnlockNotepad", args => UnlockNotepad() },
-		{ "IncreaseBackpackWeight", args => IncreaseBackpackWeight() },
 		{ "Teleport", args => Teleport(args.Slice(1)) },
 		{ "Alias", args => AddItemAlias(args.Slice(1)) },
 		{ "SaveLocation", args => AddSavedLocation(args.Slice(1)) },
@@ -100,6 +99,7 @@ public class Spawn : Mod
 		{ "SetTime", args => SetDayTime(args.Slice(1)) },
 		{ "ProgressTime", args => TimeProgress(args.Slice(1)) },
 		{ "IncreaseSkills", args => IncreaseSkills(args.Slice(1)) },
+		{ "GetUnityLogPath", args => GetUnityLogPath() },
 	};
 
 	#region Spawn and Remove
@@ -487,15 +487,6 @@ public class Spawn : Mod
 		LogMessage("Notepad unlocked!");
 	}
 
-	// Increases the backpack weight to 999
-	public static void IncreaseBackpackWeight()
-	{
-		var backpack = InventoryBackpack.Get();
-		backpack.m_MaxWeight = 999f;
-		LogMessage("Backpack weight increased to 999!");
-		LogMessage("To prevent errors, save the game only when the backpack weight is <= 50");
-	}
-
 	// Logs the item info to the console
 	// itemInfo [itemId]
 	public static void LogItemInfo(ArraySegment<string> args)
@@ -624,40 +615,36 @@ public class Spawn : Mod
 			return;
 		}
 
-		const float min = 0f;
-		const float max = 100f;
-		var fistSkill = Skill.Get<FistsSkill>();
-		fistSkill.m_Value = Mathf.Clamp(fistSkill.m_Value + amount, min, max);
-		var axeSkill = Skill.Get<AxeSkill>();
-		axeSkill.m_Value = Mathf.Clamp(axeSkill.m_Value + amount, min, max);
-		var bladeSkill = Skill.Get<BladeSkill>();
-		bladeSkill.m_Value = Mathf.Clamp(bladeSkill.m_Value + amount, min, max);
-		var spearSkill = Skill.Get<SpearSkill>();
-		spearSkill.m_Value = Mathf.Clamp(spearSkill.m_Value + amount, min, max);
-		var twoHandedSkill = Skill.Get<TwoHandedSkill>();
-		twoHandedSkill.m_Value = Mathf.Clamp(twoHandedSkill.m_Value + amount, min, max);
-		var craftingSkill = Skill.Get<CraftingSkill>();
-		craftingSkill.m_Value = Mathf.Clamp(craftingSkill.m_Value + amount, min, max);
-		var makeFireSkill = Skill.Get<MakeFireSkill>();
-		makeFireSkill.m_Value = Mathf.Clamp(makeFireSkill.m_Value + amount, min, max);
-		var cookingSkill = Skill.Get<CookingSkill>();
-		cookingSkill.m_Value = Mathf.Clamp(cookingSkill.m_Value + amount, min, max);
-		var archerySkill = Skill.Get<ArcherySkill>();
-		archerySkill.m_Value = Mathf.Clamp(archerySkill.m_Value + amount, min, max);
-		var throwingSkill = Skill.Get<ThrowingSkill>();
-		throwingSkill.m_Value = Mathf.Clamp(throwingSkill.m_Value + amount, min, max);
-		var fishingSkill = Skill.Get<FishingSkill>();
-		fishingSkill.m_Value = Mathf.Clamp(fishingSkill.m_Value + amount, min, max);
-		var harvestingAnimalsSkill = Skill.Get<HarvestingAnimalsSkill>();
-		harvestingAnimalsSkill.m_Value = Mathf.Clamp(harvestingAnimalsSkill.m_Value + amount, min, max);
-		var spearFishingSkill = Skill.Get<SpearFishingSkill>();
-		spearFishingSkill.m_Value = Mathf.Clamp(spearFishingSkill.m_Value + amount, min, max);
-		var potterySkill = Skill.Get<PotterySkill>();
-		potterySkill.m_Value = Mathf.Clamp(potterySkill.m_Value + amount, min, max);
-		var blowgunSkill = Skill.Get<BlowgunSkill>();
-		blowgunSkill.m_Value = Mathf.Clamp(blowgunSkill.m_Value + amount, min, max);
+		IncreaseSkill<FistsSkill>(amount);
+		IncreaseSkill<AxeSkill>(amount);
+		IncreaseSkill<BladeSkill>(amount);
+		IncreaseSkill<SpearSkill>(amount);
+		IncreaseSkill<TwoHandedSkill>(amount);
+		IncreaseSkill<CraftingSkill>(amount);
+		IncreaseSkill<MakeFireSkill>(amount);
+		IncreaseSkill<CookingSkill>(amount);
+		IncreaseSkill<ArcherySkill>(amount);
+		IncreaseSkill<ThrowingSkill>(amount);
+		IncreaseSkill<FishingSkill>(amount);
+		IncreaseSkill<HarvestingAnimalsSkill>(amount);
+		IncreaseSkill<SpearFishingSkill>(amount);
+		IncreaseSkill<PotterySkill>(amount);
+		IncreaseSkill<BlowgunSkill>(amount);
 
 		LogMessage(string.Format("Skills increased by {0}!", amount));
+	}
+
+	private static void IncreaseSkill<T>(float amount) where T : Skill
+	{
+		const float minSkillValue = 0f;
+		const float maxSkillValue = 100f;
+		var skill = Skill.Get<T>();
+		skill.m_Value = Mathf.Clamp(skill.m_Value + amount, minSkillValue, maxSkillValue);
+	}
+
+	public static void GetUnityLogPath()
+	{
+		LogMessage(UnityEngine.Application.consoleLogPath);
 	}
 	#endregion
 
@@ -670,7 +657,7 @@ public class Spawn : Mod
 	{
 		if (args.Count == 1 && SavedLocationsManager.TryGetLocation(args[0], out Vector3 newPos))
 		{
-			TeleportInternal(newPos);
+			TeleportInternal(newPos, true);
 			return;
 		}
 
@@ -719,7 +706,7 @@ public class Spawn : Mod
 		var newPos = new Vector3(positionLat, 5f, positionLong);
 
 		// Teleport player
-		TeleportInternal(newPos);
+		TeleportInternal(newPos, true);
 	}
 
 	private static void TeleportOffset(string @lat, string @long)
@@ -742,15 +729,14 @@ public class Spawn : Mod
 		var newPos = new Vector3(position.x + latitude, 5f, position.z + longitude);
 
 		// Teleport player
-		TeleportInternal(newPos);
+		TeleportInternal(newPos, false);
 	}
 
-	private static void TeleportInternal(Vector3 position)
+	private static void TeleportInternal(Vector3 position, bool showLoading)
 	{
 		var player = Player.Get();
 		var rotation = player.transform.rotation;
-		// show_loading
-		player.TeleportTo(position, rotation, true);
+		player.TeleportTo(position, rotation, showLoading);
 		LogMessage(string.Format("Teleported to: {0}", position));
 	}
 
@@ -792,7 +778,8 @@ public static class ItemAliasManager
 {
 	private static Dictionary<string, Enums.ItemID> _itemAliases;
 	private static readonly string BaseFolder = Application.dataPath;
-	private static readonly string AliasesPath = Path.Combine(BaseFolder, "SpawnAliases.csv");
+
+	private static readonly string AliasesPath = CalculatePath("SpawnAliases.csv");
 
 	static ItemAliasManager()
 	{
@@ -804,7 +791,7 @@ public static class ItemAliasManager
 	{
 		if (!File.Exists(AliasesPath))
 		{
-			LogMessage("Aliases file does not exist - loading aborted");
+			LogMessage(string.Format("Aliases file does not exist at path: {0}", AliasesPath));
 			return;
 		}
 		var csv = File.ReadAllLines(AliasesPath);
@@ -879,7 +866,7 @@ public static class SavedLocationsManager
 {
 	private static Dictionary<string, Vector3> _savedLocations;
 	private static readonly string BaseFolder = Application.dataPath;
-	private static readonly string SavedLocationsPath = Path.Combine(BaseFolder, "SavedLocations.csv");
+	private static readonly string SavedLocationsPath = CalculatePath("SavedLocations.csv");
 
 	static SavedLocationsManager()
 	{
@@ -891,7 +878,7 @@ public static class SavedLocationsManager
 	{
 		if (!File.Exists(SavedLocationsPath))
 		{
-			LogMessage("Saved locations file does not exist - loading aborted");
+			LogMessage(string.Format("Saved locations file does not exist at path: {0}", SavedLocationsPath));
 			return;
 		}
 		var csv = File.ReadAllLines(SavedLocationsPath);
@@ -993,6 +980,15 @@ public static class SpawnExtensions
 	private static readonly string _logPath = Path.Combine(DesktopPath, "SpawnLog.log");
 
 	private static bool _logToDesktop = false;
+
+	private static readonly string _dataPath = Path.Combine(Directory.GetParent(UnityEngine.Application.dataPath).FullName,
+														 "mods",
+														 "ModData");
+
+	public static string CalculatePath(string fileName)
+	{
+		return Path.Combine(_dataPath, fileName);
+	}
 
 	public static void ToggleLogToDesktop()
 	{

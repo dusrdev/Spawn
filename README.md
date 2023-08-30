@@ -4,6 +4,7 @@
 
 * **spawn Help** - this will export HelpText to `SpawnHelp.txt` on desktop (with commands and all item ids)
 * **spawn ToggleLog** - switches logging to `SpawnLog.log` on desktop (off by default)
+* **spawn GetUnityLogPath** - this will log the path to the unity log (useful for troubleshooting)
 * **spawn UnlockNotepad** - this will unlock the whole notepad (crafting, recipes, info...)
 * **spawn SetTime [Hour] [Minutes]** - This will set the clock to the desired time [24 hour format]
 * **spawn ProgressTime [true/false]** - This will start or stop time progression
@@ -14,7 +15,6 @@
 * **spawn Teleport [latitude] [longitude]** - this will teleport the player to the desired location
 * **spawn Teleport offset [latitude] [longitude]** - this will teleport the player to the offset location
 * **spawn Rain** - Will toggle between start and stop rain (depending on the current weather)
-* **spawn IncreaseBackPackWeight** - Will increase the max weight of the backpack to 999.
 * **spawn IncreaseSkills [amount]** - This will increase all skills by the request amount.
 * **spawn Alias [alias] [id]** - this will save an alias for an item id, so you don't have to remember complicated item names, these aliases are stored in a file and will be re-loaded with the mod, so they are persistent. If you repeat the command with a different [id] the alias will be overridden.
 * **spawn Alias [alias]** - Without specifying an item id, the alias if exists, will be removed.
