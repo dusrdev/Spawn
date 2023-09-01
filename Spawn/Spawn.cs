@@ -47,7 +47,6 @@ public class Spawn : Mod
 		}
 	}
 
-
 	[ConsoleCommand("spawn", "Check help for more info")]
 	public static void Command(string[] args)
 	{
@@ -126,7 +125,7 @@ public class Spawn : Mod
 			return;
 		}
 
-		if (!ParseEnum(args[0], out Enums.ItemID itemId))
+		if (!args[0].ParseEnum(out Enums.ItemID itemId))
 		{
 			LogMessage(string.Format("ItemId `{0}` does not exist, refer to \"spawn help\"", args[0]));
 			return;
@@ -180,9 +179,8 @@ public class Spawn : Mod
 
 	public static void RemoveItem(ArraySegment<string> args)
 	{
-		var itemId = Enums.ItemID.None;
-		var isAlias = ItemAliasManager.TryGetAlias(args[0], out itemId);
-		if (!isAlias && !ParseEnum(args[0], out itemId))
+		var isAlias = ItemAliasManager.TryGetAlias(args[0], out Enums.ItemID itemId);
+		if (!isAlias && !args[0].ParseEnum(out itemId))
 		{
 			LogMessage(string.Format("ItemId `{0}` does not exist, refer to \"spawn help\"", args[0]));
 			return;
@@ -282,7 +280,6 @@ public class Spawn : Mod
 	public static void RestoreSpecialItems()
 	{
 		var backpack = InventoryBackpack.Get();
-		int i = 0;
 
 		foreach (var item in backpack.m_Items)
 		{
@@ -421,7 +418,7 @@ public class Spawn : Mod
 		}
 
 		// add alias
-		if (!ParseEnum(args[1], out Enums.ItemID itemId))
+		if (!args[1].ParseEnum(out Enums.ItemID itemId))
 		{
 			LogMessage(string.Format("ItemId `{0}` does not exist, refer to \"spawn help\"", args[1]));
 			return;
@@ -499,7 +496,7 @@ public class Spawn : Mod
 			return;
 		}
 
-		if (!ParseEnum(args[0], out Enums.ItemID itemId))
+		if (!args[0].ParseEnum(out Enums.ItemID itemId))
 		{
 			LogMessage(string.Format("ItemId `{0}` does not exist, refer to \"spawn help\"", args[0]));
 			return;
@@ -518,7 +515,7 @@ public class Spawn : Mod
 		var props = itemInfo.GetType().GetProperties();
 		var sb = new StringBuilder();
 		sb.AppendLine();
-		sb.AppendLine("Type: " + itemInfo.GetType().Name);
+		sb.Append("Type: ").AppendLine(itemInfo.GetType().Name);
 		foreach (var prop in props)
 		{
 			var value = prop.GetValue(itemInfo);
@@ -703,8 +700,8 @@ public class Spawn : Mod
 		// calculate new position
 		const float latModifier = 40.8185f;
 		const float longModifier = 36.4861f;
-		float positionLat = (latitude - 57f) * latModifier * -1f + latModifier * 0.5f;
-		float positionLong = (longitude - 64f) * longModifier * -1f + longModifier * 0.5f;
+		float positionLat = ((latitude - 57f) * latModifier * -1f) + (latModifier * 0.5f);
+		float positionLong = ((longitude - 64f) * longModifier * -1f) + (longModifier * 0.5f);
 		var newPos = new Vector3(positionLat, 5f, positionLong);
 
 		// Teleport player
@@ -778,10 +775,9 @@ public class Spawn : Mod
 
 public static class ItemAliasManager
 {
-	private static Dictionary<string, Enums.ItemID> _itemAliases;
-	private static readonly string BaseFolder = Application.dataPath;
+	private static readonly Dictionary<string, Enums.ItemID> _itemAliases;
 
-	private static readonly string AliasesPath = CalculatePath("SpawnAliases.csv");
+	private static readonly string AliasesPath = "SpawnAliases.csv".CalculatePath();
 
 	static ItemAliasManager()
 	{
@@ -800,7 +796,7 @@ public static class ItemAliasManager
 		foreach (var line in csv)
 		{
 			var kv = line.Split(',');
-			if (!ParseEnum(kv[1], out Enums.ItemID itemId))
+			if (!kv[1].ParseEnum(out Enums.ItemID itemId))
 			{
 				LogMessage(string.Format("Failed to parse item id from alias file at line: {0}", line));
 				continue;
@@ -858,7 +854,7 @@ public static class ItemAliasManager
 		var sb = new StringBuilder();
 		foreach (var kv in _itemAliases)
 		{
-			sb.AppendLine(string.Format("'{0}': {1}", kv.Key, kv.Value));
+			sb.AppendFormat("'{0}': {1}", kv.Key, kv.Value).AppendLine();
 		}
 		return sb.ToString();
 	}
@@ -866,9 +862,8 @@ public static class ItemAliasManager
 
 public static class SavedLocationsManager
 {
-	private static Dictionary<string, Vector3> _savedLocations;
-	private static readonly string BaseFolder = Application.dataPath;
-	private static readonly string SavedLocationsPath = CalculatePath("SavedLocations.csv");
+	private static readonly Dictionary<string, Vector3> _savedLocations;
+	private static readonly string SavedLocationsPath = "SavedLocations.csv".CalculatePath();
 
 	static SavedLocationsManager()
 	{
@@ -957,7 +952,7 @@ public static class SavedLocationsManager
 		var sb = new StringBuilder();
 		foreach (var kv in _savedLocations)
 		{
-			sb.AppendLine(string.Format("'{0}': {1}", kv.Key, kv.Value));
+			sb.AppendFormat("'{0}': {1}", kv.Key, kv.Value).AppendLine();
 		}
 		return sb.ToString();
 	}
@@ -966,13 +961,13 @@ public static class SavedLocationsManager
 public static class SpawnExtensions
 {
 	// parses the item id from the string, disregards case, and verifies result is defined
-	public static bool ParseEnum<T>(string arg, out T @enum) where T : struct, Enum
+	public static bool ParseEnum<T>(this string arg, out T @enum) where T : struct, Enum
 	{
 		return Enum.TryParse(arg, true, out @enum) && Enum.IsDefined(typeof(T), @enum);
 	}
 
 	// compares two strings disregarding case
-	public static bool Equals(string a, string b)
+	public static bool EqualsInsensitive(this string a, string b)
 	{
 		return string.Compare(a, b, true) == 0;
 	}
@@ -987,7 +982,7 @@ public static class SpawnExtensions
 														 "mods",
 														 "ModData");
 
-	public static string CalculatePath(string fileName)
+	public static string CalculatePath(this string fileName)
 	{
 		return Path.Combine(_dataPath, fileName);
 	}
