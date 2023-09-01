@@ -34,6 +34,7 @@
 #### Tools
 
 * `Knife` - metal_blade_weapon but with infinite durability and damage.
+* `Stormbreaker` - modified metal_axe.
 * `First_Blade` - this will look like the Obsidian_Bone_Blade, but will have near infinite durability and will kill/destroy every object with one strike/throw.
 * `Lucifers_Spear` - this will look like the Obsidian_Spear, but will be able to kill any enemy/animal with one strike/throw.
 * `Kryptonite` - this is a small stone, but has way stronger throwing force and infinite damage, it will kill anything you throw it at with one blow.

@@ -432,6 +432,7 @@ public class Spawn : Mod
 
 	private static readonly Dictionary<string, Action> SpecialItemMap = new Dictionary<string, Action>(StringComparer.OrdinalIgnoreCase)
 		 {
+		{ "Stormbreaker", () => SpawnItemAndModify<WeaponInfo>(Enums.ItemID.metal_axe) },
 		{ "Knife", () => SpawnItemAndModify<WeaponInfo>(Enums.ItemID.metal_blade_weapon) },
 		{ "First_Blade", () => SpawnItemAndModify<WeaponInfo>(Enums.ItemID.Obsidian_Bone_Blade) },
 		{ "Lucifers_Spear", () => SpawnItemAndModify<WeaponInfo>(Enums.ItemID.Obsidian_Spear) },
@@ -453,6 +454,7 @@ public class Spawn : Mod
 	}
 
 	public static readonly HashSet<Enums.ItemID> SpecialItemIds = new HashSet<Enums.ItemID> {
+		Enums.ItemID.metal_axe,
 		Enums.ItemID.metal_blade_weapon,
 		Enums.ItemID.Obsidian_Bone_Blade,
 		Enums.ItemID.Obsidian_Spear,

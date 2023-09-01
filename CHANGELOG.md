@@ -1,4 +1,4 @@
-# Version 1.4
+# Version 1.5
 
 ## Added Commands
 
@@ -23,19 +23,8 @@
 
 ## Features Explanation
 
-* `SetTime` and `ProgressTime` will now allow you to manipulate the game time
-* `Rain` will allow you to toggle on and off, no longer having to rely on the game weather cycles.
-* `Teleport` will allow you to teleport either to coordinates, or offset (like 10 meters to some direction...), or to saved locations.
-* `IncreaseSkills` will now allow you to increase all the skills by a request amount.
-* `RestoreSpecialItems` will now check against all the item id's in the backpack and restore special stats if it is in the special items category.
-* `SaveLocation` will now let you save any location you want by name and teleport to it whenever you want. The saves are persistent, they remain when you restart and quit the game.
-* `Alias` will now let you give any requested name to an itemId, so you don't have to write or remember complex names. Aliases are also persistent and will remain when the game quits and restarts.
-* `Spawn` and `Remove` commands will now let you use the saved aliases and they will be the priority.
-* `SaveLocation` and `Alias` have `list` and `remove` options, check in the above command guide.
-* `SpecialItems` is the new name for special weapon, as now there are more than weapons, there is another weapon `Knife`, larger capacity `Bidon` and `Pot`, `Magic_Pills` which is the best food source there is, `Ligher` which is a fire starter that is instant and requires no stamina, and `Kryptonite` which is a modified stone that can thrown with extreme force and infinite damage.
+* New **SpecialItems**: `Stormbreaker` a modified metal_axe
 
 ## NOTES
-
-With this number of changes and features added there might be bugs that were missed during testing.
 
 To submit bug reports and or feature requests, find me on the GreenHellMods [discord](https://greenhellmodding.com/discord) server, or contact me on [telegram](https://t.me/dsr47)
