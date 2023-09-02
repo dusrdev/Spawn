@@ -1,3 +1,9 @@
 {
-	"dotnet.defaultSolution": "Spawn.sln"
+	"dotnet.defaultSolution": "Spawn.sln",
+	"cSpell.words": [
+		"Bidon",
+		"Debuff",
+		"Mathf",
+		"Rubing"
+	]
 }

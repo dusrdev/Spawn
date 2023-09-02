@@ -1,9 +1,7 @@
-﻿using System.Net;
-using System.Reflection;
+﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using System;
 using System.IO;
+using System.Text;
 using UnityEngine;
 using static SpawnExtensions;
 
@@ -12,8 +10,8 @@ public class Spawn : Mod
 	private static string GetHelpText()
 	{
 		var sb = new StringBuilder();
-		sb.AppendLine("Special Commands:");
-		foreach (var command in SpecialCommands.Keys)
+		sb.AppendLine("Commands:");
+		foreach (var command in Commands.Keys)
 		{
 			sb.AppendLine(command);
 		}
@@ -30,12 +28,15 @@ public class Spawn : Mod
 	}
 
 	// Exports the help to a text file on the desktop
-	private static void ExportHelpText()
+	private static void ExportHelpText(ArraySegment<string> args)
 	{
 		try
 		{
 			var path = Path.Combine(DesktopPath, "SpawnHelp.txt");
 			File.WriteAllText(path, GetHelpText());
+			File.AppendAllText(path, "LiquidTypes:\n\n");
+			var liquidTypes = Enum.GetNames(typeof(Enums.LiquidType));
+			File.AppendAllLines(path, liquidTypes);
 			File.AppendAllText(path, "ItemIds:\n\n");
 			var itemIds = Enum.GetNames(typeof(Enums.ItemID));
 			File.AppendAllLines(path, itemIds);
@@ -64,20 +65,20 @@ public class Spawn : Mod
 
 		var segment = new ArraySegment<string>(args);
 
-		if (SpecialCommands.TryGetValue(args[0], out Action<ArraySegment<string>> action))
+		if (Commands.TryGetValue(args[0], out Action<ArraySegment<string>> action))
 		{
-			action(segment);
+			try
+			{
+				action(segment.Slice(1));
+			}
+			catch (Exception e)
+			{
+				LogMessage(string.Format("Error while executing command: `{0}`\nStackTrace: {1}", e.Message, e.StackTrace));
+			}
 			return;
 		}
 
-		if (segment.Count > 1 && Equals(args[1], "rm"))
-		{
-			RemoveItem(segment);
-		}
-		else
-		{
-			SpawnItem(segment);
-		}
+		LogMessage("Invalid command, check help for more info!");
 	}
 
 	public void OnModUnload()
@@ -85,23 +86,28 @@ public class Spawn : Mod
 		LogMessage("Mod Spawn has been unloaded!");
 	}
 
-	private static readonly Dictionary<string, Action<ArraySegment<string>>> SpecialCommands = new Dictionary<string, Action<ArraySegment<string>>>(StringComparer.OrdinalIgnoreCase) {
-		{ "Help", args => ExportHelpText() },
-		{ "ToggleLog", args => ToggleLogToDesktop() },
-		{ "Rain", args => ToggleRain() },
-		{ "RestoreSpecialItems", args => RestoreSpecialItems() },
-		{ "UnlockNotepad", args => UnlockNotepad() },
-		{ "Teleport", args => Teleport(args.Slice(1)) },
-		{ "Alias", args => AddItemAlias(args.Slice(1)) },
-		{ "SaveLocation", args => AddSavedLocation(args.Slice(1)) },
-		{ "ItemInfo", args => LogItemInfo(args.Slice(1)) },
-		{ "SetTime", args => SetDayTime(args.Slice(1)) },
-		{ "ProgressTime", args => TimeProgress(args.Slice(1)) },
-		{ "IncreaseSkills", args => IncreaseSkills(args.Slice(1)) },
-		{ "GetUnityLogPath", args => GetUnityLogPath() },
+	private static readonly Dictionary<string, Action<ArraySegment<string>>> Commands = new Dictionary<string, Action<ArraySegment<string>>>(StringComparer.OrdinalIgnoreCase) {
+		{ "Help", ExportHelpText },
+		{ "ToggleLog", ToggleLogToDesktop },
+		{ "GetItem", SpawnItem },
+		{ "RemoveItem", RemoveItem },
+		{ "Rain", ToggleRain },
+		{ "RestoreSpecialItems", RestoreSpecialItems },
+		{ "UnlockNotepad", UnlockNotepad },
+		{ "Teleport", Teleport },
+		{ "Alias", AddItemAlias },
+		{ "SaveLocation", AddSavedLocation },
+		{ "FillLiquid", FillLiquid },
+		{ "ItemInfo", LogItemInfo },
+		{ "SetTime", SetDayTime },
+		{ "ProgressTime", TimeProgress },
+		{ "IncreaseSkills", IncreaseSkills },
+		{ "GetUnityLogPath", GetUnityLogPath },
 	};
 
 	#region Spawn and Remove
+
+	// GetItem [itemId/SpecialItemName/Alias] [quantity(Default=1)]
 	public static void SpawnItem(ArraySegment<string> args)
 	{
 		if (SpecialItemMap.TryGetValue(args[0], out Action itemSpawnFunction))
@@ -177,6 +183,7 @@ public class Spawn : Mod
 		ModifyItemProperties(typeof(T), item.m_Info, differentTypeIsError);
 	}
 
+	// RemoveItem [itemId/Alias] [maxDistance(Default=5)/debug]
 	public static void RemoveItem(ArraySegment<string> args)
 	{
 		var isAlias = ItemAliasManager.TryGetAlias(args[0], out Enums.ItemID itemId);
@@ -189,25 +196,24 @@ public class Spawn : Mod
 		float maxDistance = 5f;
 		bool debug = false;
 
-		if (args.Count > 2)
+		if (args.Count > 1)
 		{
-			if (Equals(args[2], "debug"))
+			if (args[1].EqualsInsensitive("debug"))
 			{
 				debug = true;
 			}
 			else
 			{
-				var isValid = float.TryParse(args[2], out maxDistance);
+				var isValid = float.TryParse(args[1], out maxDistance);
 				if (!isValid)
 				{
-					LogMessage(string.Format("Invalid distance: {0}", args[2]));
+					LogMessage(string.Format("Invalid distance: {0}", args[1]));
 					return;
 				}
 			}
 		}
 
-		var playerTransform = Player.Get().transform;
-		var playerPosition = playerTransform.position;
+		var playerPosition = Player.Get().GetWorldPosition();
 
 		var sb = new StringBuilder();
 		sb.Append("ItemID: ")
@@ -277,7 +283,7 @@ public class Spawn : Mod
 		}
 	}
 
-	public static void RestoreSpecialItems()
+	public static void RestoreSpecialItems(ArraySegment<string> args)
 	{
 		var backpack = InventoryBackpack.Get();
 
@@ -328,14 +334,14 @@ public class Spawn : Mod
 		itemInfo.m_ThrowDamage = float.MaxValue;
 	}
 
-	// Modifies containers - Capacity = 1000
-	private static void ModifyContainer(LiquidContainerInfo itemInfo)
+	// Modifies containers - Optional Capacity
+	private static void ModifyContainer(LiquidContainerInfo itemInfo, float capacity = 1000f)
 	{
-		itemInfo.m_Capacity = 1000f;
+		itemInfo.m_Capacity = capacity;
 		itemInfo.m_Mass = 0.1f;
 	}
 
-	// Modifies the stats of a firestarter
+	// Modifies the stats of a fire starter
 	private static void ModifyFireStarter(ItemToolInfo itemInfo)
 	{
 		itemInfo.m_Mass = 0.1f;
@@ -389,7 +395,6 @@ public class Spawn : Mod
 		else
 		{
 			LogMessage(string.Format("Modification of '{0}' and type '{1}' is not supported!", itemInfo.m_ID, type.Name));
-			return;
 		}
 	}
 
@@ -425,6 +430,57 @@ public class Spawn : Mod
 		}
 
 		LogMessage(ItemAliasManager.AddAlias(args[0], itemId));
+	}
+
+	// FillLiquid [LiquidType] [Capacity(Optional)]
+	public static void FillLiquid(ArraySegment<string> args)
+	{
+		if (args.Count < 1)
+		{
+			LogMessage("FillLiquid requires additional arguments: [LiquidType] [Capacity(Default=100)]");
+			return;
+		}
+
+		if (!args[0].ParseEnum(out Enums.LiquidType liquidType))
+		{
+			LogMessage(string.Format("LiquidType `{0}` does not exist, refer to \"spawn help\"", args[0]));
+			return;
+		}
+
+		var capacity = 0f;
+		var capacityModified = false;
+		if (args.Count > 1)
+		{
+			if (float.TryParse(args[1], out capacity))
+			{
+				capacityModified = true;
+			}
+			else
+			{
+				LogMessage(string.Format("Capacity `{0}` is invalid!", args[1]));
+				return;
+			}
+		}
+
+		var backpack = InventoryBackpack.Get();
+		foreach (var item in backpack.m_Items)
+		{
+			if (!item.m_Info.IsLiquidContainer() || item.m_Info.IsBowl())
+			{
+				continue;
+			}
+			var info = (LiquidContainerInfo)item.m_Info;
+			info.m_LiquidType = liquidType;
+			if (capacityModified)
+			{
+				info.m_Amount = capacity;
+				continue;
+			}
+			// default capacity
+			info.m_Amount = info.m_Capacity;
+		}
+
+		LogMessage(string.Format("Filled liquid containers with '{0}'", liquidType));
 	}
 
 	private static readonly Dictionary<string, Action> SpecialItemMap = new Dictionary<string, Action>(StringComparer.OrdinalIgnoreCase)
@@ -465,7 +521,7 @@ public class Spawn : Mod
 
 	#region Special Commands
 	// Toggles rain on/off
-	public static void ToggleRain()
+	public static void ToggleRain(ArraySegment<string> args)
 	{
 		var manager = RainManager.Get();
 		if (manager.IsRain())
@@ -479,7 +535,7 @@ public class Spawn : Mod
 	}
 
 	// Unlocks the whole notepad
-	public static void UnlockNotepad()
+	public static void UnlockNotepad(ArraySegment<string> args)
 	{
 		var manager = ItemsManager.Get();
 		manager.UnlockWholeNotepad();
@@ -641,9 +697,9 @@ public class Spawn : Mod
 		skill.m_Value = Mathf.Clamp(skill.m_Value + amount, minSkillValue, maxSkillValue);
 	}
 
-	public static void GetUnityLogPath()
+	public static void GetUnityLogPath(ArraySegment<string> args)
 	{
-		LogMessage(UnityEngine.Application.consoleLogPath);
+		LogMessage(Application.consoleLogPath);
 	}
 	#endregion
 
@@ -656,7 +712,7 @@ public class Spawn : Mod
 	{
 		if (args.Count == 1 && SavedLocationsManager.TryGetLocation(args[0], out Vector3 newPos))
 		{
-			TeleportInternal(newPos, true);
+			TeleportInternal(newPos);
 			return;
 		}
 
@@ -705,7 +761,7 @@ public class Spawn : Mod
 		var newPos = new Vector3(positionLat, 5f, positionLong);
 
 		// Teleport player
-		TeleportInternal(newPos, true);
+		TeleportInternal(newPos);
 	}
 
 	private static void TeleportOffset(string @lat, string @long)
@@ -728,14 +784,13 @@ public class Spawn : Mod
 		var newPos = new Vector3(position.x + latitude, 5f, position.z + longitude);
 
 		// Teleport player
-		TeleportInternal(newPos, false);
+		TeleportInternal(newPos);
 	}
 
-	private static void TeleportInternal(Vector3 position, bool showLoading)
+	private static void TeleportInternal(Vector3 position)
 	{
 		var player = Player.Get();
-		var rotation = player.transform.rotation;
-		player.TeleportTo(position, rotation, showLoading);
+		player.Reposition(position);
 		LogMessage(string.Format("Teleported to: {0}", position));
 	}
 
@@ -976,7 +1031,7 @@ public static class SpawnExtensions
 
 	private static readonly string _logPath = Path.Combine(DesktopPath, "SpawnLog.log");
 
-	private static bool _logToDesktop = false;
+	private static bool _logToDesktop;
 
 	private static readonly string _dataPath = Path.Combine(Directory.GetParent(UnityEngine.Application.dataPath).FullName,
 														 "mods",
@@ -987,7 +1042,7 @@ public static class SpawnExtensions
 		return Path.Combine(_dataPath, fileName);
 	}
 
-	public static void ToggleLogToDesktop()
+	public static void ToggleLogToDesktop(ArraySegment<string> args)
 	{
 		_logToDesktop = !_logToDesktop;
 		LogMessage(string.Format("Log to desktop: {0}", _logToDesktop));
