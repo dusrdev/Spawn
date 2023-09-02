@@ -20,13 +20,8 @@
 * **spawn Alias [alias]** - Without specifying an item id, the alias if exists, will be removed.
 * **spawn Alias list** - this will list the saved item aliases.
 * **spawn ItemInfo [id]** - This will log all the properties inside the ItemInfo for that specific item.
-* **spawn [id/alias]** - this will spawn the item with the corresponding [id]
-* **spawn [id/alias] [quantity]** - this will spawn multiples of the item, only applicable to items that can be places inside the backpack.
-* **spawn [id/alias] rm** - this will destroy all items with that [id] in radius of 5 (approximately 2.5 meters/yards)
-* **spawn [id/alias] rm [maxDistance]** - this is same as last one but can configure distance
-* **spawn [id/alass] rm debug** - this will list all found items with their positions and distances but **NOT REMOVE THEM**
-* **spawn [specialItem]** - this will spawn an existing item but with modified stats
-* **spawn [specialItem] [quantity]** - this will spawn multiples of the special item
+* **spawn Get [Id/Alias/specialItemName] [quantity]** - this will spawn multiples of the item by id, alias or special item name, quantity is optional and will default to 1 if left out
+* **spawn Remove [id/alias] [maxDistance/debug]** - this will remove the item by id or alias, maxDistance will be defaulted to 5 if left out, if instead you ask for "debug", it will log all items at all distances and location but not remove them.
 * **spawn RestoreSpecialItems** - this will attempt to restore the properties of the special items it can find in the backpack, Other items with the same id will also be granted the same properties. So either use other items for regular things, or spawn and destroy the special items according to usage.
 
 ### Special Items

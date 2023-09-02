@@ -89,8 +89,8 @@ public class Spawn : Mod
 	private static readonly Dictionary<string, Action<ArraySegment<string>>> Commands = new Dictionary<string, Action<ArraySegment<string>>>(StringComparer.OrdinalIgnoreCase) {
 		{ "Help", ExportHelpText },
 		{ "ToggleLog", ToggleLogToDesktop },
-		{ "GetItem", SpawnItem },
-		{ "RemoveItem", RemoveItem },
+		{ "Get", SpawnItem },
+		{ "Remove", RemoveItem },
 		{ "Rain", ToggleRain },
 		{ "RestoreSpecialItems", RestoreSpecialItems },
 		{ "UnlockNotepad", UnlockNotepad },
