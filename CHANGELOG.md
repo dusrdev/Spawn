@@ -12,6 +12,14 @@
 * `Teleportation` no longer features a loading screen and should be more stable in accounting for environment features
 * New **SpecialItems**:
   * `Stormbreaker` a modified metal_axe
+* New Command - `CompleteConstructions` - this will complete all placed constructions
+* New Command - `RemoveConstructions [maxDistance(Default=10)]` - this will remove all constructions within the distance
+  * If `maxDistance` is not specified it will default to 10.
+* New Command - `EndlessFires`
+  * This command is a toggle
+  * All fires within the distance of 5 that are also currently burning, will be endless (require no fuel and can't be distinguished). Calling the command again will restore the normal mode for these fires.
+* New Command - `UnlockMaps` - this command will give the player all available maps and unlock all the locations on them.
+* Codebase restructured to allow better maintainability and make it easier to add functionality.
 
 ## NOTES
 

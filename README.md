@@ -6,6 +6,8 @@
 * **spawn ToggleLog** - switches logging to `SpawnLog.log` on desktop (off by default)
 * **spawn GetUnityLogPath** - this will log the path to the unity log (useful for troubleshooting)
 * **spawn UnlockNotepad** - this will unlock the whole notepad (crafting, recipes, info...)
+* **spawn UnlockMaps** - gives the player all available maps and unlocks all locations
+* **spawn EndlessFires** - this will toggle on/off for all the fires within distance=5 to be endless (if they are burning)
 * **spawn SetTime [Hour] [Minutes]** - This will set the clock to the desired time [24 hour format]
 * **spawn ProgressTime [true/false]** - This will start or stop time progression
 * **spawn SaveLocation list** - this will list the saved locations and their coordinates
@@ -22,6 +24,8 @@
 * **spawn ItemInfo [id]** - This will log all the properties inside the ItemInfo for that specific item.
 * **spawn Get [Id/Alias/specialItemName] [quantity]** - this will spawn multiples of the item by id, alias or special item name, quantity is optional and will default to 1 if left out
 * **spawn Remove [id/alias] [maxDistance/debug]** - this will remove the item by id or alias, maxDistance will be defaulted to 5 if left out, if instead you ask for "debug", it will log all items at all distances and location but not remove them.
+* **spawn RemoveConstructions [maxDistance]** - this removes all constructions placed within the distance.
+* **spawn CompleteConstructions** - this will complete all started constructions.
 * **spawn RestoreSpecialItems** - this will attempt to restore the properties of the special items it can find in the backpack, Other items with the same id will also be granted the same properties. So either use other items for regular things, or spawn and destroy the special items according to usage.
 
 ### Special Items
