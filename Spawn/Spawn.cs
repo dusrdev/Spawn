@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Enums;
 using UnityEngine;
 using static SpawnExtensions;
 
@@ -125,13 +126,13 @@ public class Spawn : Mod
 			return;
 		}
 
-		if (ItemAliasManager.TryGetAlias(args[0], out Enums.ItemID aliasedItemId))
+		if (ItemAliasManager.TryGetAlias(args[0], out ItemID aliasedItemId))
 		{
 			SpawnItemInternal(aliasedItemId, args);
 			return;
 		}
 
-		if (!args[0].ParseEnum(out Enums.ItemID itemId))
+		if (!args[0].ParseEnum(out ItemID itemId))
 		{
 			LogMessage(string.Format("ItemId `{0}` does not exist, refer to \"spawn help\"", args[0]));
 			return;
@@ -186,7 +187,7 @@ public class Spawn : Mod
 	// RemoveItem [itemId/Alias] [maxDistance(Default=5)/debug]
 	public static void RemoveItem(ArraySegment<string> args)
 	{
-		var isAlias = ItemAliasManager.TryGetAlias(args[0], out Enums.ItemID itemId);
+		var isAlias = ItemAliasManager.TryGetAlias(args[0], out ItemID itemId);
 		if (!isAlias && !args[0].ParseEnum(out itemId))
 		{
 			LogMessage(string.Format("ItemId `{0}` does not exist, refer to \"spawn help\"", args[0]));
@@ -418,12 +419,12 @@ public class Spawn : Mod
 				return;
 			}
 			// remove alias
-			LogMessage(ItemAliasManager.AddAlias(args[0], Enums.ItemID.None));
+			LogMessage(ItemAliasManager.AddAlias(args[0], ItemID.None));
 			return;
 		}
 
 		// add alias
-		if (!args[1].ParseEnum(out Enums.ItemID itemId))
+		if (!args[1].ParseEnum(out ItemID itemId))
 		{
 			LogMessage(string.Format("ItemId `{0}` does not exist, refer to \"spawn help\"", args[1]));
 			return;
@@ -441,7 +442,7 @@ public class Spawn : Mod
 			return;
 		}
 
-		if (!args[0].ParseEnum(out Enums.LiquidType liquidType))
+		if (!args[0].ParseEnum(out LiquidType liquidType))
 		{
 			LogMessage(string.Format("LiquidType `{0}` does not exist, refer to \"spawn help\"", args[0]));
 			return;
@@ -485,15 +486,15 @@ public class Spawn : Mod
 
 	private static readonly Dictionary<string, Action> SpecialItemMap = new Dictionary<string, Action>(StringComparer.OrdinalIgnoreCase)
 		 {
-		{ "Stormbreaker", () => SpawnItemAndModify<WeaponInfo>(Enums.ItemID.metal_axe) },
-		{ "Knife", () => SpawnItemAndModify<WeaponInfo>(Enums.ItemID.metal_blade_weapon) },
-		{ "First_Blade", () => SpawnItemAndModify<WeaponInfo>(Enums.ItemID.Obsidian_Bone_Blade) },
-		{ "Lucifers_Spear", () => SpawnItemAndModify<WeaponInfo>(Enums.ItemID.Obsidian_Spear) },
-		{ "Super_Bidon", () => SpawnItemAndModify<LiquidContainerInfo>(Enums.ItemID.Bidon) },
-		{ "Super_Pot", () => SpawnItemAndModify<BowlInfo>(Enums.ItemID.Pot) },
-		{ "Magic_Pills", () => SpawnItemAndModify<FoodInfo>(Enums.ItemID.Painkillers) },
-		{ "Kryptonite", () => SpawnItemAndModify<ItemInfo>(Enums.ItemID.Stone, false) },
-		{ "Lighter", () => SpawnItemAndModify<ItemToolInfo>(Enums.ItemID.Rubing_Wood) },
+		{ "Stormbreaker", () => SpawnItemAndModify<WeaponInfo>(ItemID.metal_axe) },
+		{ "Knife", () => SpawnItemAndModify<WeaponInfo>(ItemID.metal_blade_weapon) },
+		{ "First_Blade", () => SpawnItemAndModify<WeaponInfo>(ItemID.Obsidian_Bone_Blade) },
+		{ "Lucifers_Spear", () => SpawnItemAndModify<WeaponInfo>(ItemID.Obsidian_Spear) },
+		{ "Super_Bidon", () => SpawnItemAndModify<LiquidContainerInfo>(ItemID.Bidon) },
+		{ "Super_Pot", () => SpawnItemAndModify<BowlInfo>(ItemID.Pot) },
+		{ "Magic_Pills", () => SpawnItemAndModify<FoodInfo>(ItemID.Painkillers) },
+		{ "Kryptonite", () => SpawnItemAndModify<ItemInfo>(ItemID.Stone, false) },
+		{ "Lighter", () => SpawnItemAndModify<ItemToolInfo>(ItemID.Rubing_Wood) },
 	};
 
 	public static string GetSpecialItemNames()
@@ -506,16 +507,16 @@ public class Spawn : Mod
 		return sb.ToString();
 	}
 
-	public static readonly HashSet<Enums.ItemID> SpecialItemIds = new HashSet<Enums.ItemID> {
-		Enums.ItemID.metal_axe,
-		Enums.ItemID.metal_blade_weapon,
-		Enums.ItemID.Obsidian_Bone_Blade,
-		Enums.ItemID.Obsidian_Spear,
-		Enums.ItemID.Bidon,
-		Enums.ItemID.Pot,
-		Enums.ItemID.Painkillers,
-		Enums.ItemID.Stone,
-		Enums.ItemID.Rubing_Wood,
+	public static readonly HashSet<ItemID> SpecialItemIds = new HashSet<ItemID> {
+		ItemID.metal_axe,
+		ItemID.metal_blade_weapon,
+		ItemID.Obsidian_Bone_Blade,
+		ItemID.Obsidian_Spear,
+		ItemID.Bidon,
+		ItemID.Pot,
+		ItemID.Painkillers,
+		ItemID.Stone,
+		ItemID.Rubing_Wood,
 	};
 	#endregion
 
@@ -552,7 +553,7 @@ public class Spawn : Mod
 			return;
 		}
 
-		if (!args[0].ParseEnum(out Enums.ItemID itemId))
+		if (!args[0].ParseEnum(out ItemID itemId))
 		{
 			LogMessage(string.Format("ItemId `{0}` does not exist, refer to \"spawn help\"", args[0]));
 			return;
@@ -561,7 +562,7 @@ public class Spawn : Mod
 		GetProps(itemId);
 	}
 
-	private static void GetProps(Enums.ItemID itemId)
+	private static void GetProps(ItemID itemId)
 	{
 		var manager = ItemsManager.Get();
 		var item = manager.CreateItem(itemId, false);
@@ -830,13 +831,13 @@ public class Spawn : Mod
 
 public static class ItemAliasManager
 {
-	private static readonly Dictionary<string, Enums.ItemID> _itemAliases;
+	private static readonly Dictionary<string, ItemID> _itemAliases;
 
 	private static readonly string AliasesPath = "SpawnAliases.csv".CalculatePath();
 
 	static ItemAliasManager()
 	{
-		_itemAliases = new Dictionary<string, Enums.ItemID>(StringComparer.OrdinalIgnoreCase);
+		_itemAliases = new Dictionary<string, ItemID>(StringComparer.OrdinalIgnoreCase);
 		LoadAliases();
 	}
 
@@ -851,7 +852,7 @@ public static class ItemAliasManager
 		foreach (var line in csv)
 		{
 			var kv = line.Split(',');
-			if (!kv[1].ParseEnum(out Enums.ItemID itemId))
+			if (!kv[1].ParseEnum(out ItemID itemId))
 			{
 				LogMessage(string.Format("Failed to parse item id from alias file at line: {0}", line));
 				continue;
@@ -877,14 +878,14 @@ public static class ItemAliasManager
 		File.WriteAllLines(AliasesPath, csv);
 	}
 
-	public static bool TryGetAlias(string alias, out Enums.ItemID itemID)
+	public static bool TryGetAlias(string alias, out ItemID itemID)
 	{
 		return _itemAliases.TryGetValue(alias, out itemID);
 	}
 
-	public static string AddAlias(string alias, Enums.ItemID itemID)
+	public static string AddAlias(string alias, ItemID itemID)
 	{
-		if (itemID != Enums.ItemID.None)
+		if (itemID != ItemID.None)
 		{
 			_itemAliases[alias] = itemID;
 			SaveItemAliases();
@@ -1033,7 +1034,7 @@ public static class SpawnExtensions
 
 	private static bool _logToDesktop;
 
-	private static readonly string _dataPath = Path.Combine(Directory.GetParent(UnityEngine.Application.dataPath).FullName,
+	private static readonly string _dataPath = Path.Combine(Directory.GetParent(Application.dataPath).FullName,
 														 "mods",
 														 "ModData");
 
