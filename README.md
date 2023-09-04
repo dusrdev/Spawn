@@ -34,16 +34,16 @@
 
 * `Knife` - metal_blade_weapon but with infinite durability and damage.
 * `Stormbreaker` - modified metal_axe.
-* `First_Blade` - this will look like the Obsidian_Bone_Blade, but will have near infinite durability and will kill/destroy every object with one strike/throw.
-* `Lucifers_Spear` - this will look like the Obsidian_Spear, but will be able to kill any enemy/animal with one strike/throw.
+* `FirstBlade` - this will look like the Obsidian_Bone_Blade, but will have near infinite durability and will kill/destroy every object with one strike/throw.
+* `LucifersSpear` - this will look like the Obsidian_Spear, but will be able to kill any enemy/animal with one strike/throw.
 * `Kryptonite` - this is a small stone, but has way stronger throwing force and infinite damage, it will kill anything you throw it at with one blow.
 * `Lighter` - this is a fire starter that will ignite instantly, have unlimited uses and not use any stamina.
 
 #### Containers
 
-* `Super-Bidon` - this will look like the Bidon but will hold 1000 units of liquid.
-* `Super-Pot` - like Pot and also hold 1000 units of liquid.
+* `SuperBidon` - this will look like the Bidon but will hold 1000 units of liquid.
+* `SuperPot` - like Pot and also hold 1000 units of liquid.
 
 #### Others
 
-* `Super_Pills` - this is a modified version of Painkillers, it will fill all of your stats, cure insomnia, fever, and venom/poison.
+* `SuperPills` - this is a modified version of Painkillers, it will fill all of your stats, cure insomnia, fever, and venom/poison.

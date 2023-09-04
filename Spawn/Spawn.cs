@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Enums;
 using SpawnMod;
-using UnityEngine;
 using static SpawnMod.SpawnExtensions;
 
 public class Spawn : Mod
@@ -24,9 +25,13 @@ public class Spawn : Mod
 		return sb.ToString();
 	}
 
+	private readonly CancellationTokenSource _cancellationToken = new CancellationTokenSource();
+
 	public void Start()
 	{
 		LogMessage("Mod Spawn has been loaded!");
+		Task.Run(RestoreLogToggle);
+		Task.Run(SpecialCommands.RestoreLighterBackpackAsync);
 	}
 
 	// Exports the help to a text file on the desktop
@@ -71,7 +76,11 @@ public class Spawn : Mod
 		{
 			try
 			{
-				action(segment.Slice(1));
+				if (segment.Count > 1)
+				{
+					segment = segment.Slice(1);
+				}
+				action(segment);
 			}
 			catch (Exception e)
 			{
@@ -85,29 +94,11 @@ public class Spawn : Mod
 
 	public void OnModUnload()
 	{
+		_cancellationToken.Cancel();
+		_cancellationToken.Dispose();
 		LogMessage("Mod Spawn has been unloaded!");
 	}
 
-	private static readonly Dictionary<string, Action<ArraySegment<string>>> Commands = new Dictionary<string, Action<ArraySegment<string>>>(StringComparer.OrdinalIgnoreCase) {
-		{ "Alias", SpawnAndRemove.AddItemAlias },
-		{ "CompleteConstructions", SpecialCommands.CompleteConstructions },
-		{ "EndlessFires", SpecialCommands.EndlessFires },
-		{ "FillLiquid", SpecialCommands.FillLiquid },
-		{ "Get", SpawnAndRemove.SpawnItem },
-		{ "GetUnityLogPath", SpecialCommands.GetUnityLogPath },
-		{ "Help", ExportHelpText },
-		{ "IncreaseSkills", SpecialCommands.IncreaseSkills },
-		{ "ItemInfo", SpecialCommands.LogItemInfo },
-		{ "ProgressTime", SpecialCommands.TimeProgress },
-		{ "Rain", SpecialCommands.ToggleRain },
-		{ "Remove", SpawnAndRemove.RemoveItem },
-		{ "RemoveConstructions", SpawnAndRemove.RemoveConstructions },
-		{ "RestoreSpecialItems", SpawnAndRemove.RestoreSpecialItems },
-		{ "SaveLocation", Teleportation.AddSavedLocation },
-		{ "SetTime", SpecialCommands.SetDayTime },
-		{ "Teleport", Teleportation.Teleport },
-		{ "ToggleLog", ToggleLogToDesktop },
-		{ "UnlockMaps", SpecialCommands.UnlockMaps },
-		{ "UnlockNotepad", SpecialCommands.UnlockNotepad },
+	private static readonly Dictionary<string, Action<ArraySegment<string>>> Commands = new Dictionary<string, Action<ArraySegment<string>>>(StringComparer.OrdinalIgnoreCase) { { "Alias", SpawnAndRemove.AddItemAlias }, { "CompleteConstructions", SpecialCommands.CompleteConstructions }, { "EndlessFires", SpecialCommands.EndlessFires }, { "FillLiquid", SpecialCommands.FillLiquid }, { "FixAudioBug", SpecialCommands.FixAudioBug }, { "Get", SpawnAndRemove.SpawnItem }, { "GetUnityLogPath", SpecialCommands.GetUnityLogPath }, { "Help", ExportHelpText }, { "IncreaseSkills", SpecialCommands.IncreaseSkills }, { "ItemInfo", SpecialCommands.LogItemInfo }, { "LighterBackpack", SpecialCommands.LighterBackpack }, { "ProgressTime", SpecialCommands.TimeProgress }, { "Rain", SpecialCommands.ToggleRain }, { "Remove", SpawnAndRemove.RemoveItem }, { "RemoveConstructions", SpawnAndRemove.RemoveConstructions }, { "RestoreSpecialItems", SpawnAndRemove.RestoreSpecialItems }, { "SaveLocation", Teleportation.AddSavedLocation }, { "SetTime", SpecialCommands.SetDayTime }, { "Teleport", Teleportation.Teleport }, { "ToggleLog", ToggleLogToDesktop }, { "UnlockMaps", SpecialCommands.UnlockMaps }, { "UnlockNotepad", SpecialCommands.UnlockNotepad },
 	};
 }

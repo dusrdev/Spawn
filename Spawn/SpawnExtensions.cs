@@ -25,17 +25,30 @@ namespace SpawnMod
 		private static bool _logToDesktop;
 
 		private static readonly string _dataPath = Path.Combine(Directory.GetParent(Application.dataPath).FullName,
-															 "mods",
-															 "ModData");
+			"mods",
+			"ModData");
 
 		public static string CalculatePath(this string fileName)
 		{
 			return Path.Combine(_dataPath, fileName);
 		}
 
+		private const string _logToggleKey = "spawn_mod_logToDesktop";
+
+		public static void RestoreLogToggle()
+		{
+			if (!PlayerPrefs.HasKey(_logToggleKey))
+			{
+				_logToDesktop = false;
+				return;
+			}
+			_logToDesktop = Convert.ToBoolean(PlayerPrefs.GetInt(_logToggleKey));
+		}
+
 		public static void ToggleLogToDesktop(ArraySegment<string> args)
 		{
 			_logToDesktop = !_logToDesktop;
+			PlayerPrefs.SetInt(_logToggleKey, Convert.ToInt32(_logToDesktop));
 			LogMessage(string.Format("Log to desktop: {0}", _logToDesktop));
 		}
 

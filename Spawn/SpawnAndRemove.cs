@@ -397,11 +397,11 @@ namespace SpawnMod
 		 {
 		{ "Stormbreaker", () => SpawnItemAndModify<WeaponInfo>(ItemID.metal_axe) },
 		{ "Knife", () => SpawnItemAndModify<WeaponInfo>(ItemID.metal_blade_weapon) },
-		{ "First_Blade", () => SpawnItemAndModify<WeaponInfo>(ItemID.Obsidian_Bone_Blade) },
-		{ "Lucifers_Spear", () => SpawnItemAndModify<WeaponInfo>(ItemID.Obsidian_Spear) },
-		{ "Super_Bidon", () => SpawnItemAndModify<LiquidContainerInfo>(ItemID.Bidon) },
-		{ "Super_Pot", () => SpawnItemAndModify<BowlInfo>(ItemID.Pot) },
-		{ "Magic_Pills", () => SpawnItemAndModify<FoodInfo>(ItemID.Painkillers) },
+		{ "FirstBlade", () => SpawnItemAndModify<WeaponInfo>(ItemID.Obsidian_Bone_Blade) },
+		{ "LucifersSpear", () => SpawnItemAndModify<WeaponInfo>(ItemID.Obsidian_Spear) },
+		{ "SuperBidon", () => SpawnItemAndModify<LiquidContainerInfo>(ItemID.Bidon) },
+		{ "SuperPot", () => SpawnItemAndModify<BowlInfo>(ItemID.Pot) },
+		{ "MagicPills", () => SpawnItemAndModify<FoodInfo>(ItemID.Painkillers) },
 		{ "Kryptonite", () => SpawnItemAndModify<ItemInfo>(ItemID.Stone, false) },
 		{ "Lighter", () => SpawnItemAndModify<ItemToolInfo>(ItemID.Rubing_Wood) },
 	};

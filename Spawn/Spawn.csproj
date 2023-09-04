@@ -37,6 +37,12 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Spawn.cs" />
+    <Compile Include="SpawnExtensions.cs" />
+    <Compile Include="SpecialCommands.cs" />
+    <Compile Include="SpawnAndRemove.cs" />
+    <Compile Include="Teleportation.cs" />
+    <Compile Include="ItemAliasManager.cs" />
+    <Compile Include="SavedLocationsManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />

@@ -1,5 +1,9 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 using Enums;
 using UnityEngine;
 using static SpawnMod.SpawnExtensions;
@@ -94,8 +98,8 @@ namespace SpawnMod
 					continue;
 				}
 				sb.Append(prop.Name)
-				  .Append(": ")
-				  .AppendLine(value.ToString());
+					.Append(": ")
+					.AppendLine(value.ToString());
 			}
 			LogMessage(sb.ToString());
 		}
@@ -184,32 +188,39 @@ namespace SpawnMod
 				return;
 			}
 
-			IncreaseSkill<FistsSkill>(amount);
-			IncreaseSkill<AxeSkill>(amount);
-			IncreaseSkill<BladeSkill>(amount);
-			IncreaseSkill<SpearSkill>(amount);
-			IncreaseSkill<TwoHandedSkill>(amount);
-			IncreaseSkill<CraftingSkill>(amount);
-			IncreaseSkill<MakeFireSkill>(amount);
-			IncreaseSkill<CookingSkill>(amount);
-			IncreaseSkill<ArcherySkill>(amount);
-			IncreaseSkill<ThrowingSkill>(amount);
-			IncreaseSkill<FishingSkill>(amount);
-			IncreaseSkill<HarvestingAnimalsSkill>(amount);
-			IncreaseSkill<SpearFishingSkill>(amount);
-			IncreaseSkill<PotterySkill>(amount);
-			IncreaseSkill<BlowgunSkill>(amount);
+			// IncreaseSkill<FistsSkill>(amount);
+			// IncreaseSkill<AxeSkill>(amount);
+			// IncreaseSkill<BladeSkill>(amount);
+			// IncreaseSkill<SpearSkill>(amount);
+			// IncreaseSkill<TwoHandedSkill>(amount);
+			// IncreaseSkill<CraftingSkill>(amount);
+			// IncreaseSkill<MakeFireSkill>(amount);
+			// IncreaseSkill<CookingSkill>(amount);
+			// IncreaseSkill<ArcherySkill>(amount);
+			// IncreaseSkill<ThrowingSkill>(amount);
+			// IncreaseSkill<FishingSkill>(amount);
+			// IncreaseSkill<HarvestingAnimalsSkill>(amount);
+			// IncreaseSkill<SpearFishingSkill>(amount);
+			// IncreaseSkill<PotterySkill>(amount);
+			// IncreaseSkill<BlowgunSkill>(amount);
+			const float minSkillValue = 0f;
+			const float maxSkillValue = 100f;
+
+			foreach (var skill in SkillsManager.Get().m_Skills)
+			{
+				skill.m_Value = Mathf.Clamp(skill.m_Value + amount, minSkillValue, maxSkillValue);
+			}
 
 			LogMessage(string.Format("Skills increased by {0}!", amount));
 		}
 
-		private static void IncreaseSkill<T>(float amount) where T : Skill
-		{
-			const float minSkillValue = 0f;
-			const float maxSkillValue = 100f;
-			var skill = Skill.Get<T>();
-			skill.m_Value = Mathf.Clamp(skill.m_Value + amount, minSkillValue, maxSkillValue);
-		}
+		// private static void IncreaseSkill<T>(float amount) where T : Skill
+		// {
+		// 	const float minSkillValue = 0f;
+		// 	const float maxSkillValue = 100f;
+		// 	var skill = Skill.Get<T>();
+		// 	skill.m_Value = Mathf.Clamp(skill.m_Value + amount, minSkillValue, maxSkillValue);
+		// }
 
 		// FillLiquid [LiquidType] [Capacity(Optional)]
 		public static void FillLiquid(ArraySegment<string> args)
@@ -270,10 +281,11 @@ namespace SpawnMod
 			foreach (var firecamp in Firecamp.s_Firecamps)
 			{
 				var distance = Vector3.Distance(pos, firecamp.transform.position);
-				if (!firecamp.IsBurning() || distance > radius)
+				if (distance > radius)
 				{
 					continue;
 				}
+				firecamp.Ignite();
 				firecamp.m_EndlessFire = !firecamp.m_EndlessFire;
 			}
 
@@ -287,6 +299,106 @@ namespace SpawnMod
 				constructionGhost.m_CurrentStep = constructionGhost.m_Steps.Count;
 			}
 			LogMessage("All constructions completed!");
+		}
+
+		private const string _lighterBackpackKey = "spawn_mod_lighter_backpack";
+		private const float _backpackDefaultWeight = 50f;
+		private const float _backpackMaxWeight = 999f;
+
+		// LighterBackpack [true/false]
+		public static void LighterBackpack(ArraySegment<string> args)
+		{
+			if (args.Count < 1)
+			{
+				LogMessage("LighterBackpack requires additional argument: [true/false]");
+				return;
+			}
+			if (!bool.TryParse(args[0], out bool lighter))
+			{
+				LogMessage(string.Format("`{0}` is invalid boolean!", args[0]));
+				return;
+			}
+			int lighterVal = Convert.ToInt32(lighter);
+			if (PlayerPrefs.HasKey(_lighterBackpackKey) && PlayerPrefs.GetInt(_lighterBackpackKey) == lighterVal)
+			{
+				LogMessage(string.Format("Lighter backpack is already set to {0}!", lighter));
+				return;
+			}
+			var backpack = InventoryBackpack.Get();
+			if (!lighter)
+			{
+				PlayerPrefs.SetInt(_lighterBackpackKey, lighterVal);
+				backpack.m_MaxWeight = _backpackDefaultWeight;
+				LogMessage("Backpack max weight restored to 50f!");
+				return;
+			}
+			PlayerPrefs.SetInt(_lighterBackpackKey, lighterVal);
+			backpack.m_MaxWeight = _backpackMaxWeight;
+			LogMessage("Backpack max weight set to 999f!");
+		}
+
+		public static async Task RestoreLighterBackpackAsync()
+		{
+			if (!PlayerPrefs.HasKey(_lighterBackpackKey))
+			{
+				return;
+			}
+			if (!Convert.ToBoolean(PlayerPrefs.GetInt(_lighterBackpackKey)))
+			{
+				return;
+			}
+			while (InventoryBackpack.Get() == null)
+			{
+				await Task.Delay(1000);
+			}
+			var backpack = InventoryBackpack.Get();
+			backpack.m_MaxWeight = _backpackMaxWeight;
+			LogMessage("Lighter backpack restored!");
+		}
+
+		private static readonly FieldInfo FireCampSound = typeof(Firecamp).GetField("m_Sound", BindingFlags.NonPublic | BindingFlags.Instance);
+		private static readonly FieldInfo AudioSourcesField = typeof(AnimationEventsReceiver).GetField("m_FootstepAudioSources", BindingFlags.NonPublic | BindingFlags.Instance);
+
+		public static void FixAudioBug(ArraySegment<string> args)
+		{
+			try
+			{
+				foreach (var campfire in Firecamp.s_Firecamps) // Solve for firecamp audio bug
+				{
+					var sound = (AudioSource)FireCampSound.GetValue(campfire);
+					if (sound is null)
+					{
+						continue;
+					}
+					FireCampSound.SetValue(campfire, null);
+					LogMessage(string.Format("'{0}' firecamp m_Sound field set to null!", campfire.name));
+				}
+				foreach (var being in BeingsManager.GetAllBeings())
+				{
+					var receiver = being.m_AnimationEventsReceiver;
+					var sources = (List<AudioSource>)AudioSourcesField.GetValue(receiver);
+					if (sources.Count == 0)
+					{
+						continue;
+					}
+					int i = 0;
+					while (i < sources.Count)
+					{
+						var source = sources[i];
+						if (source is null)
+						{
+							continue;
+						}
+						sources[i] = null;
+						i++;
+					}
+					LogMessage(string.Format("Neutralized `{0}` m_FootstepAudioSources", being.name));
+				}
+			}
+			catch
+			{
+				throw;
+			}
 		}
 
 		public static void GetUnityLogPath(ArraySegment<string> args)
