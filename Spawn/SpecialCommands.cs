@@ -1,16 +1,17 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+
 using Enums;
+
 using UnityEngine;
+
 using static SpawnMod.SpawnExtensions;
 
-namespace SpawnMod
-{
-	public static class SpecialCommands
+namespace SpawnMod {
+    public static class SpecialCommands
 	{
 		// Toggles rain on/off
 		public static void ToggleRain(ArraySegment<string> args)
@@ -188,21 +189,6 @@ namespace SpawnMod
 				return;
 			}
 
-			// IncreaseSkill<FistsSkill>(amount);
-			// IncreaseSkill<AxeSkill>(amount);
-			// IncreaseSkill<BladeSkill>(amount);
-			// IncreaseSkill<SpearSkill>(amount);
-			// IncreaseSkill<TwoHandedSkill>(amount);
-			// IncreaseSkill<CraftingSkill>(amount);
-			// IncreaseSkill<MakeFireSkill>(amount);
-			// IncreaseSkill<CookingSkill>(amount);
-			// IncreaseSkill<ArcherySkill>(amount);
-			// IncreaseSkill<ThrowingSkill>(amount);
-			// IncreaseSkill<FishingSkill>(amount);
-			// IncreaseSkill<HarvestingAnimalsSkill>(amount);
-			// IncreaseSkill<SpearFishingSkill>(amount);
-			// IncreaseSkill<PotterySkill>(amount);
-			// IncreaseSkill<BlowgunSkill>(amount);
 			const float minSkillValue = 0f;
 			const float maxSkillValue = 100f;
 
@@ -213,14 +199,6 @@ namespace SpawnMod
 
 			LogMessage(string.Format("Skills increased by {0}!", amount));
 		}
-
-		// private static void IncreaseSkill<T>(float amount) where T : Skill
-		// {
-		// 	const float minSkillValue = 0f;
-		// 	const float maxSkillValue = 100f;
-		// 	var skill = Skill.Get<T>();
-		// 	skill.m_Value = Mathf.Clamp(skill.m_Value + amount, minSkillValue, maxSkillValue);
-		// }
 
 		// FillLiquid [LiquidType] [Capacity(Optional)]
 		public static void FillLiquid(ArraySegment<string> args)

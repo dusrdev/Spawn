@@ -4,8 +4,11 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+
 using Enums;
+
 using SpawnMod;
+
 using static SpawnMod.SpawnExtensions;
 
 public class Spawn : Mod
@@ -32,7 +35,8 @@ public class Spawn : Mod
 		LogMessage("Mod Spawn has been loaded!");
 		Task.Run(RestoreLogToggle);
 		Task.Run(SpecialCommands.RestoreLighterBackpackAsync);
-	}
+        Task.Run(SpawnAndRemove.RestoreSpecialItemsAsync);
+    }
 
 	// Exports the help to a text file on the desktop
 	private static void ExportHelpText(ArraySegment<string> args)
