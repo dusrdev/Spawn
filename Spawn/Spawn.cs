@@ -99,6 +99,29 @@ public class Spawn : Mod
 		LogMessage("Mod Spawn has been unloaded!");
 	}
 
-	private static readonly Dictionary<string, Action<ArraySegment<string>>> Commands = new Dictionary<string, Action<ArraySegment<string>>>(StringComparer.OrdinalIgnoreCase) { { "Alias", SpawnAndRemove.AddItemAlias }, { "CompleteConstructions", SpecialCommands.CompleteConstructions }, { "EndlessFires", SpecialCommands.EndlessFires }, { "FillLiquid", SpecialCommands.FillLiquid }, { "FixAudioBug", SpecialCommands.FixAudioBug }, { "Get", SpawnAndRemove.SpawnItem }, { "GetUnityLogPath", SpecialCommands.GetUnityLogPath }, { "Help", ExportHelpText }, { "IncreaseSkills", SpecialCommands.IncreaseSkills }, { "ItemInfo", SpecialCommands.LogItemInfo }, { "LighterBackpack", SpecialCommands.LighterBackpack }, { "ProgressTime", SpecialCommands.TimeProgress }, { "Rain", SpecialCommands.ToggleRain }, { "Remove", SpawnAndRemove.RemoveItem }, { "RemoveConstructions", SpawnAndRemove.RemoveConstructions }, { "RestoreSpecialItems", SpawnAndRemove.RestoreSpecialItems }, { "SaveLocation", Teleportation.AddSavedLocation }, { "SetTime", SpecialCommands.SetDayTime }, { "Teleport", Teleportation.Teleport }, { "ToggleLog", ToggleLogToDesktop }, { "UnlockMaps", SpecialCommands.UnlockMaps }, { "UnlockNotepad", SpecialCommands.UnlockNotepad },
-	};
+	private static readonly Dictionary<string, Action<ArraySegment<string>>> Commands = new Dictionary<string, Action<ArraySegment<string>>>(StringComparer.OrdinalIgnoreCase)
+ {
+		{ "Alias", SpawnAndRemove.AddItemAlias },
+		{ "CompleteConstructions", SpecialCommands.CompleteConstructions },
+		{ "EndlessFires", SpecialCommands.EndlessFires },
+		{ "FillLiquid", SpecialCommands.FillLiquid },
+		{ "FixAudioBug", SpecialCommands.FixAudioBug },
+		{ "Get", SpawnAndRemove.SpawnItem },
+		{ "GetUnityLogPath", SpecialCommands.GetUnityLogPath },
+		{ "Help", ExportHelpText },
+		{ "IncreaseSkills", SpecialCommands.IncreaseSkills },
+		{ "ItemInfo", SpecialCommands.LogItemInfo },
+		{ "LighterBackpack", SpecialCommands.LighterBackpack },
+		{ "ProgressTime", SpecialCommands.TimeProgress },
+		{ "Rain", SpecialCommands.ToggleRain },
+		{ "Remove", SpawnAndRemove.RemoveItem },
+		{ "RemoveConstructions", SpawnAndRemove.RemoveConstructions },
+		{ "RestoreSpecialItems", SpawnAndRemove.RestoreSpecialItems },
+		{ "SaveLocation", Teleportation.AddSavedLocation },
+		{ "SetTime", SpecialCommands.SetDayTime },
+		{ "Teleport", Teleportation.Teleport },
+		{ "ToggleLog", ToggleLogToDesktop },
+		{ "UnlockMaps", SpecialCommands.UnlockMaps },
+		{ "UnlockNotepad", SpecialCommands.UnlockNotepad },
+ };
 }
