@@ -223,8 +223,8 @@ namespace SpawnMod {
                     continue;
                 }
                 if (firecamp.m_EndlessFire) {
-					firecamp.Extinguish();
-					firecamp.m_EndlessFire = false;
+                    firecamp.Extinguish();
+                    firecamp.m_EndlessFire = false;
                     continue;
                 }
                 firecamp.Ignite();
@@ -241,15 +241,15 @@ namespace SpawnMod {
             LogMessage("All constructions completed!");
         }
 
-        private const string _lighterBackpackKey = "spawn_mod_lighter_backpack";
-        private const float _backpackDefaultWeight = 50f;
-        private const float _backpackMaxWeight = 999f;
+        private const string LighterBackpackKey = "spawn_mod_lighter_backpack";
+        private const float BackpackDefaultWeight = 50f;
+        private const float BackpackMaxWeight = 999f;
 
         // LighterBackpack [true/false]
         public static void LighterBackpack(ArraySegment<string> args) {
             var backpack = InventoryBackpack.Get();
             if (args.Count < 1) {
-                backpack.m_MaxWeight = _backpackMaxWeight;
+                backpack.m_MaxWeight = BackpackMaxWeight;
                 LogMessage("Backpack max weight set to 999f!");
                 return;
             }
@@ -258,36 +258,40 @@ namespace SpawnMod {
                 return;
             }
             int lighterVal = Convert.ToInt32(lighter);
-            if (PlayerPrefs.HasKey(_lighterBackpackKey) && PlayerPrefs.GetInt(_lighterBackpackKey) == lighterVal) {
+            if (PlayerPrefs.HasKey(LighterBackpackKey) && PlayerPrefs.GetInt(LighterBackpackKey) == lighterVal) {
                 LogMessage(string.Format("Lighter backpack is already set to {0}!", lighter));
                 return;
             }
             if (!lighter) {
-                PlayerPrefs.SetInt(_lighterBackpackKey, lighterVal);
-                backpack.m_MaxWeight = _backpackDefaultWeight;
+                PlayerPrefs.SetInt(LighterBackpackKey, lighterVal);
+                backpack.m_MaxWeight = BackpackDefaultWeight;
                 LogMessage("Backpack max weight restored to 50f!");
                 return;
             }
-            PlayerPrefs.SetInt(_lighterBackpackKey, lighterVal);
-            backpack.m_MaxWeight = _backpackMaxWeight;
+            PlayerPrefs.SetInt(LighterBackpackKey, lighterVal);
+            backpack.m_MaxWeight = BackpackMaxWeight;
             LogMessage("Backpack max weight set to 999f!");
         }
 
         public static async Task RestoreLighterBackpackAsync(CancellationToken token) {
-            if (!PlayerPrefs.HasKey(_lighterBackpackKey)) {
+            if (!PlayerPrefs.HasKey(LighterBackpackKey)) {
                 return;
             }
-            if (!Convert.ToBoolean(PlayerPrefs.GetInt(_lighterBackpackKey))) {
+            if (!Convert.ToBoolean(PlayerPrefs.GetInt(LighterBackpackKey))) {
                 return;
             }
             while (InventoryBackpack.Get() == null) {
                 if (token.IsCancellationRequested) {
                     return;
                 }
-                await Task.Delay(1000, token);
+                try {
+                    await Task.Delay(1000, token);
+                } catch (TaskCanceledException) {
+                    return;
+                }
             }
             var backpack = InventoryBackpack.Get();
-            backpack.m_MaxWeight = _backpackMaxWeight;
+            backpack.m_MaxWeight = BackpackMaxWeight;
             LogMessage("Lighter backpack restored!");
         }
 
@@ -301,14 +305,18 @@ namespace SpawnMod {
                 } catch (Exception e) {
                     LogMessage(string.Format("Error while fixing audio bug: {0}", e.Message));
                 }
-                await Task.Delay(10000, token);
+                try {
+                    await Task.Delay(10000, token);
+                } catch (TaskCanceledException) {
+                    return;
+                }
             }
         }
 
         public static void FixAudioBug(ArraySegment<string> args) {
             if (args.Count > 0 && bool.TryParse(args[0], out bool force) && force) {
                 LogMessage("Forcing continuous audio bug fixing every 10 seconds!");
-                Task.Run(() => FixAudioBugBackground(Spawn.CancellationToken.Token)).ConfigureAwait(false);
+                Spawn.BackgroundTasks.Add(Task.Run(() => FixAudioBugBackground(Spawn.CancellationToken.Token)));
                 return;
             }
             try {
@@ -323,9 +331,9 @@ namespace SpawnMod {
                 }
                 foreach (var being in BeingsManager.GetAllBeings()) {
                     var receiver = being.m_AnimationEventsReceiver;
-					if (receiver is null) {
-						continue;
-					}
+                    if (receiver is null) {
+                        continue;
+                    }
                     var sources = (List<AudioSource>)AudioSourcesField.GetValue(receiver);
                     if (sources.Count == 0) {
                         continue;

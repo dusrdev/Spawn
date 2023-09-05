@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Enums;
@@ -213,20 +214,27 @@ namespace SpawnMod {
             }
         }
 
-        private const string _specialItemsKey = "spawn_mod_special_items";
+        private const string SpecialItemsKey = "spawn_mod_special_items";
 
-        public static async Task RestoreSpecialItemsAsync() {
-            if (!PlayerPrefs.HasKey(_specialItemsKey) || PlayerPrefs.GetInt(_specialItemsKey) == 0) {
+        public static async Task RestoreSpecialItemsAsync(CancellationToken token) {
+            if (!PlayerPrefs.HasKey(SpecialItemsKey) || !Convert.ToBoolean(PlayerPrefs.GetInt(SpecialItemsKey))) {
                 return;
             }
             while (InventoryBackpack.Get() == null) {
-                await Task.Delay(1000);
+                if (token.IsCancellationRequested) {
+                    return;
+                }
+                try {
+                    await Task.Delay(1000, token);
+                } catch (TaskCanceledException) {
+                    return;
+                }
             }
-			RestoreSpecialItems(ArraySegment<string>.Empty);
+            RestoreSpecialItems(ArraySegment<string>.Empty);
         }
 
         private static void SetRestoreSpecialItems(bool value) {
-            PlayerPrefs.SetInt(_specialItemsKey, value ? 1 : 0);
+            PlayerPrefs.SetInt(SpecialItemsKey, value ? 1 : 0);
         }
 
         // RestoreSpecialItems [true/false]
@@ -250,7 +258,7 @@ namespace SpawnMod {
             }
             var type = itemInfo.GetType();
             LogMessage(string.Format("Restoring \"{0}\"", itemInfo.m_ID));
-            if (itemInfo.m_ID == Enums.ItemID.Stone) {
+            if (itemInfo.m_ID == ItemID.Stone) {
                 ModifyItemProperties(type, itemInfo, false);
                 return;
             }
