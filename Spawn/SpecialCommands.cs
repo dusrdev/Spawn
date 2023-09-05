@@ -1,9 +1,5 @@
 using System;
-using System.Collections.Generic;
-using System.Reflection;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 using Enums;
 
@@ -273,85 +269,13 @@ namespace SpawnMod {
             LogMessage("Backpack max weight set to 999f!");
         }
 
-        public static async Task RestoreLighterBackpackAsync(CancellationToken token) {
-            if (!PlayerPrefs.HasKey(LighterBackpackKey)) {
+        public static void RestoreLighterBackpack() {
+            if (!PlayerPrefs.HasKey(LighterBackpackKey) || !Convert.ToBoolean(PlayerPrefs.GetInt(LighterBackpackKey))) {
                 return;
-            }
-            if (!Convert.ToBoolean(PlayerPrefs.GetInt(LighterBackpackKey))) {
-                return;
-            }
-            while (InventoryBackpack.Get() == null) {
-                if (token.IsCancellationRequested) {
-                    return;
-                }
-                try {
-                    await Task.Delay(1000, token);
-                } catch (TaskCanceledException) {
-                    return;
-                }
             }
             var backpack = InventoryBackpack.Get();
             backpack.m_MaxWeight = BackpackMaxWeight;
             LogMessage("Lighter backpack restored!");
-        }
-
-        private static readonly FieldInfo FireCampSound = typeof(Firecamp).GetField("m_Sound", BindingFlags.NonPublic | BindingFlags.Instance);
-        private static readonly FieldInfo AudioSourcesField = typeof(AnimationEventsReceiver).GetField("m_FootstepAudioSources", BindingFlags.NonPublic | BindingFlags.Instance);
-
-        public static async Task FixAudioBugBackground(CancellationToken token) {
-            while (!token.IsCancellationRequested) {
-                try {
-                    FixAudioBug(default);
-                } catch (Exception e) {
-                    LogMessage(string.Format("Error while fixing audio bug: {0}", e.Message));
-                }
-                try {
-                    await Task.Delay(10000, token);
-                } catch (TaskCanceledException) {
-                    return;
-                }
-            }
-        }
-
-        public static void FixAudioBug(ArraySegment<string> args) {
-            if (args.Count > 0 && bool.TryParse(args[0], out bool force) && force) {
-                LogMessage("Forcing continuous audio bug fixing every 10 seconds!");
-                Spawn.BackgroundTasks.Add(Task.Run(() => FixAudioBugBackground(Spawn.CancellationToken.Token)));
-                return;
-            }
-            try {
-                foreach (var campfire in Firecamp.s_Firecamps) // Solve for firecamp audio bug
-                {
-                    var sound = (AudioSource)FireCampSound.GetValue(campfire);
-                    if (sound is null) {
-                        continue;
-                    }
-                    FireCampSound.SetValue(campfire, null);
-                    LogMessage(string.Format("'{0}' firecamp m_Sound field set to null!", campfire.name));
-                }
-                foreach (var being in BeingsManager.GetAllBeings()) {
-                    var receiver = being.m_AnimationEventsReceiver;
-                    if (receiver is null) {
-                        continue;
-                    }
-                    var sources = (List<AudioSource>)AudioSourcesField.GetValue(receiver);
-                    if (sources.Count == 0) {
-                        continue;
-                    }
-                    int i = 0;
-                    while (i < sources.Count) {
-                        var source = sources[i];
-                        if (source is null) {
-                            continue;
-                        }
-                        sources[i] = null;
-                        i++;
-                    }
-                    LogMessage(string.Format("Neutralized `{0}` m_FootstepAudioSources", being.name));
-                }
-            } catch {
-                throw;
-            }
         }
 
         public static void GetUnityLogPath(ArraySegment<string> args) {

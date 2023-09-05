@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 using Enums;
 
@@ -216,19 +214,9 @@ namespace SpawnMod {
 
         private const string SpecialItemsKey = "spawn_mod_special_items";
 
-        public static async Task RestoreSpecialItemsAsync(CancellationToken token) {
+        public static void RestoreSpecialItemsFromMemory() {
             if (!PlayerPrefs.HasKey(SpecialItemsKey) || !Convert.ToBoolean(PlayerPrefs.GetInt(SpecialItemsKey))) {
                 return;
-            }
-            while (InventoryBackpack.Get() == null) {
-                if (token.IsCancellationRequested) {
-                    return;
-                }
-                try {
-                    await Task.Delay(1000, token);
-                } catch (TaskCanceledException) {
-                    return;
-                }
             }
             RestoreSpecialItems(ArraySegment<string>.Empty);
         }

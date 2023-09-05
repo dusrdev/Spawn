@@ -1,13 +1,14 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 using Enums;
 
 using SpawnMod;
+
+using UnityEngine;
 
 using static SpawnMod.SpawnExtensions;
 
@@ -25,14 +26,32 @@ public class Spawn : Mod {
         return sb.ToString();
     }
 
-    public static CancellationTokenSource CancellationToken = new CancellationTokenSource();
-    public static List<Task> BackgroundTasks = new List<Task>();
+    private readonly Action[] _inventoryActions = new Action[] {
+        SpawnAndRemove.RestoreSpecialItemsFromMemory,
+        SpecialCommands.RestoreLighterBackpack,
+    };
+
+    private Coroutine _inventoryCoroutine;
+
+    private IEnumerator InventoryCoroutine() {
+        bool inventoryLoaded = false;
+        while (true) {
+            if (InventoryBackpack.Get() == null) {
+                inventoryLoaded = false;
+            } else if (!inventoryLoaded) {
+                inventoryLoaded = true;
+                foreach (var action in _inventoryActions) {
+                    action();
+                }
+            }
+            yield return new WaitForSeconds(10f);
+        }
+    }
 
     public void Start() {
         LogMessage("Mod Spawn has been loaded!");
-        Task.Run(RestoreLogToggle);
-        BackgroundTasks.Add(Task.Run(() => SpawnAndRemove.RestoreSpecialItemsAsync(CancellationToken.Token)));
-        BackgroundTasks.Add(Task.Run(() => SpecialCommands.RestoreLighterBackpackAsync(CancellationToken.Token)));
+        RestoreLogToggle();
+        _inventoryCoroutine = StartCoroutine(InventoryCoroutine());
     }
 
     // Exports the help to a text file on the desktop
@@ -82,14 +101,9 @@ public class Spawn : Mod {
     }
 
     public void OnModUnload() {
-        CancellationToken.Cancel();
-        CancellationToken.Dispose();
-        for (int i = 0; i < BackgroundTasks.Count; i++) {
-			LogMessage(string.Format("Waiting for background task {0} to complete...", i));
-            BackgroundTasks[i].Wait();
-            LogMessage(string.Format("Background task {0} has been completed!", i));
+        if (_inventoryCoroutine != null) {
+            StopCoroutine(_inventoryCoroutine);
         }
-        BackgroundTasks.Clear();
         LogMessage("Mod Spawn has been unloaded!");
     }
 
@@ -99,7 +113,6 @@ public class Spawn : Mod {
         { "CompleteConstructions", SpecialCommands.CompleteConstructions },
         { "EndlessFires", SpecialCommands.EndlessFires },
         { "FillLiquid", SpecialCommands.FillLiquid },
-        { "FixAudioBug", SpecialCommands.FixAudioBug },
         { "Get", SpawnAndRemove.SpawnItem },
         { "GetUnityLogPath", SpecialCommands.GetUnityLogPath },
         { "Help", ExportHelpText },
