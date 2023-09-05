@@ -28,14 +28,14 @@ public class Spawn : Mod
 		return sb.ToString();
 	}
 
-	private readonly CancellationTokenSource _cancellationToken = new CancellationTokenSource();
+	public static CancellationTokenSource CancellationToken = new CancellationTokenSource();
 
 	public void Start()
 	{
 		LogMessage("Mod Spawn has been loaded!");
 		Task.Run(RestoreLogToggle);
-		Task.Run(SpecialCommands.RestoreLighterBackpackAsync);
         Task.Run(SpawnAndRemove.RestoreSpecialItemsAsync);
+		Task.Run(() => SpecialCommands.RestoreLighterBackpackAsync(CancellationToken.Token)).ConfigureAwait(false);
     }
 
 	// Exports the help to a text file on the desktop
@@ -98,8 +98,8 @@ public class Spawn : Mod
 
 	public void OnModUnload()
 	{
-		_cancellationToken.Cancel();
-		_cancellationToken.Dispose();
+		CancellationToken.Cancel();
+		CancellationToken.Dispose();
 		LogMessage("Mod Spawn has been unloaded!");
 	}
 
