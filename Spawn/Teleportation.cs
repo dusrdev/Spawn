@@ -12,7 +12,7 @@ namespace SpawnMod
 		// teleport [locationName]
 		public static void Teleport(ArraySegment<string> args)
 		{
-			if (args.Count == 1 && SavedLocationsManager.TryGetLocation(args[0], out Vector3 newPos))
+			if (args.Count is 1 && SavedLocationsManager.TryGetLocation(args[0], out Vector3 newPos))
 			{
 				TeleportInternal(newPos);
 				return;
@@ -25,7 +25,7 @@ namespace SpawnMod
 			}
 
 			// Regular teleportation to coordinates
-			if (args.Count == 2)
+			if (args.Count is 2)
 			{
 				TeleportToCoordinates(args[0], args[1]);
 				return;
@@ -45,13 +45,13 @@ namespace SpawnMod
 		{
 			if (!float.TryParse(@lat, out float latitude))
 			{
-				LogMessage(string.Format("Invalid argument for 'latitude': {0}", @lat));
+				LogMessage($"Invalid argument for 'latitude': {@lat}");
 				return;
 			}
 
 			if (!float.TryParse(@long, out float longitude))
 			{
-				LogMessage(string.Format("Invalid argument for 'longitude': {0}", @long));
+				LogMessage($"Invalid argument for 'longitude': {@long}");
 				return;
 			}
 
@@ -70,13 +70,13 @@ namespace SpawnMod
 		{
 			if (!float.TryParse(@lat, out float latitude))
 			{
-				LogMessage(string.Format("Invalid argument for 'latitude': {0}", @lat));
+				LogMessage($"Invalid argument for 'latitude': {@lat}");
 				return;
 			}
 
 			if (!float.TryParse(@long, out float longitude))
 			{
-				LogMessage(string.Format("Invalid argument for 'longitude': {0}", @long));
+				LogMessage($"Invalid argument for 'longitude': {@long}");
 				return;
 			}
 
@@ -93,7 +93,7 @@ namespace SpawnMod
 		{
 			var player = Player.Get();
 			player.Reposition(position);
-			LogMessage(string.Format("Teleported to: {0}", position));
+			LogMessage($"Teleported to: {position}");
 		}
 
 		// Saves the current player position to a file
@@ -109,7 +109,7 @@ namespace SpawnMod
 			}
 
 			// remove location
-			if (args.Count == 2 && Equals(args[1], "remove"))
+			if (args.Count is 2 && Equals(args[1], "remove"))
 			{
 				LogMessage(SavedLocationsManager.AddLocation(args[0], Vector3.zero));
 				return;

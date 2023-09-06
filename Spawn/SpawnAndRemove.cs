@@ -16,7 +16,7 @@ namespace SpawnMod {
             if (SpecialItemMap.TryGetValue(args[0], out Action itemSpawnFunction)) {
                 var count = 1;
                 if (args.Count > 1 && !int.TryParse(args[1], out count)) {
-                    LogMessage(string.Format("Quantity `{0}` is invalid!", args[1]));
+                    LogMessage($"Quantity `{args[1]}` is invalid!");
                     return;
                 }
                 for (var i = 0; i < count; i++) {
@@ -31,7 +31,7 @@ namespace SpawnMod {
             }
 
             if (!args[0].ParseEnum(out ItemID itemId)) {
-                LogMessage(string.Format("ItemId `{0}` does not exist, refer to \"spawn help\"", args[0]));
+                LogMessage($"ItemId `{args[0]}` does not exist, refer to \"spawn help\"");
                 return;
             }
 
@@ -42,7 +42,7 @@ namespace SpawnMod {
             var quantity = 1;
 
             if (args.Count > 1 && !int.TryParse(args[1], out quantity)) {
-                LogMessage(string.Format("Quantity `{0}` is invalid!", args[1]));
+                LogMessage($"Quantity `{args[1]}` is invalid!");
                 return;
             }
 
@@ -50,7 +50,7 @@ namespace SpawnMod {
             var itemInfo = manager.GetInfo(itemId);
 
             if (itemInfo.m_CanBeAddedToInventory) {
-                LogMessage(string.Format("Spawning {0} x `{1}` to backpack", quantity, itemId));
+                LogMessage($"Spawning {quantity} x `{itemId}` to backpack");
                 var backpack = InventoryBackpack.Get();
                 for (var i = 0; i < quantity; i++) {
                     var itemInstance = manager.CreateItem(itemId, false);
@@ -59,7 +59,7 @@ namespace SpawnMod {
                 return;
             }
 
-            LogMessage(string.Format("Spawning at player: {0}", itemId));
+            LogMessage($"Spawning at player: `{itemId}`");
             var item = manager.CreateItem(itemId, false);
             var playerTransform = Player.Get().transform;
             item.transform.position = playerTransform.position;
@@ -67,8 +67,8 @@ namespace SpawnMod {
             item.ItemsManagerRegister(true);
         }
 
-        private static void SpawnItemAndModify<T>(Enums.ItemID itemId, bool differentTypeIsError = true) where T : ItemInfo {
-            LogMessage(string.Format("Spawning modified \"{0}\".", itemId));
+        private static void SpawnItemAndModify<T>(ItemID itemId, bool differentTypeIsError = true) where T : ItemInfo {
+            LogMessage($"Spawning modified `{itemId}`.");
             var manager = ItemsManager.Get();
             var item = manager.CreateItem(itemId, false);
             var backpack = InventoryBackpack.Get();
@@ -80,7 +80,7 @@ namespace SpawnMod {
         public static void RemoveItem(ArraySegment<string> args) {
             var isAlias = ItemAliasManager.TryGetAlias(args[0], out ItemID itemId);
             if (!isAlias && !args[0].ParseEnum(out itemId)) {
-                LogMessage(string.Format("ItemId `{0}` does not exist, refer to \"spawn help\"", args[0]));
+                LogMessage($"ItemId `{args[0]}` does not exist, refer to \"spawn help\"");
                 return;
             }
 
@@ -93,7 +93,7 @@ namespace SpawnMod {
                 } else {
                     var isValid = float.TryParse(args[1], out maxDistance);
                     if (!isValid) {
-                        LogMessage(string.Format("Invalid distance: {0}", args[1]));
+                        LogMessage($"Invalid distance: {args[1]}");
                         return;
                     }
                 }
@@ -115,7 +115,7 @@ namespace SpawnMod {
 
             var items = new Dictionary<int, Item>();
             int index = 1;
-            LogMessage(string.Format("Searching for {0} at distance {1}", itemId, maxDistance));
+            LogMessage($"Searching for `{itemId}` at distance `{maxDistance}`");
             foreach (var item in Item.s_AllItems) {
                 if (item.m_Info.m_ID != itemId) {
                     continue;
@@ -134,12 +134,12 @@ namespace SpawnMod {
                 if (distance > maxDistance) {
                     continue;
                 }
-                LogMessage(string.Format("Item {0} found at distance {1}", index, distance));
+                LogMessage($"Item `{index}` found at distance `{distance}`");
                 items[index] = item;
                 index++;
             }
 
-            if (index == 1) {
+            if (index is 1) {
                 LogMessage("No items found!");
             }
 
@@ -157,7 +157,7 @@ namespace SpawnMod {
                 item.m_Info.m_DestroyByItemsManager = true;
                 item.m_Info.m_CantDestroy = false;
                 ItemsManager.Get().AddItemToDestroy(item);
-                LogMessage(string.Format("Item {0} removed!", index));
+                LogMessage($"Item `{index}` removed!");
                 index++;
             }
         }
@@ -169,7 +169,7 @@ namespace SpawnMod {
             if (args.Count > 1) {
                 var isValid = float.TryParse(args[1], out maxDistance);
                 if (!isValid) {
-                    LogMessage(string.Format("Invalid distance: {0}", args[1]));
+                    LogMessage($"Invalid distance: `{args[1]}`");
                     return;
                 }
             }
@@ -189,12 +189,12 @@ namespace SpawnMod {
                     continue;
                 }
 
-                LogMessage(string.Format("Construction {0} found at distance {1}", index, distance));
+                LogMessage($"Construction `{index}` found at distance `{distance}`");
                 items[index] = item;
                 index++;
             }
 
-            if (index == 1) {
+            if (index is 1) {
                 LogMessage("No items found!");
             }
 
@@ -207,7 +207,7 @@ namespace SpawnMod {
                 item.m_Info.m_DestroyByItemsManager = true;
                 item.m_Info.m_CantDestroy = false;
                 ItemsManager.Get().AddItemToDestroy(item);
-                LogMessage(string.Format("Construction {0} removed!", index));
+                LogMessage($"Construction `{index}` removed!");
                 index++;
             }
         }
@@ -245,7 +245,7 @@ namespace SpawnMod {
                 return;
             }
             var type = itemInfo.GetType();
-            LogMessage(string.Format("Restoring \"{0}\"", itemInfo.m_ID));
+            LogMessage($"Restoring `{itemInfo.m_ID}`");
             if (itemInfo.m_ID == ItemID.Stone) {
                 ModifyItemProperties(type, itemInfo, false);
                 return;
@@ -299,7 +299,7 @@ namespace SpawnMod {
             itemInfo.m_Water = 100f;
             itemInfo.m_AddEnergy = 100f;
             itemInfo.m_SanityChange = 100;
-            itemInfo.m_ConsumeEffect = Enums.ConsumeEffect.Fever;
+            itemInfo.m_ConsumeEffect = ConsumeEffect.Fever;
             itemInfo.m_ConsumeEffectChance = 1f;
             itemInfo.m_ConsumeEffectDelay = 0f;
             itemInfo.m_ConsumeEffectLevel = -15;
@@ -319,7 +319,7 @@ namespace SpawnMod {
             } else if (!differentIsError) {
                 ModifyThrowable(itemInfo);
             } else {
-                LogMessage(string.Format("Modification of '{0}' and type '{1}' is not supported!", itemInfo.m_ID, type.Name));
+                LogMessage($"Modification of '{itemInfo.m_ID}' and type '{type.Name}' is not supported!");
             }
         }
 
@@ -332,7 +332,7 @@ namespace SpawnMod {
             }
 
             // list or remove
-            if (args.Count == 1) {
+            if (args.Count is 1) {
                 // list existing aliases
                 if (Equals(args[0], "list")) {
                     LogMessage(ItemAliasManager.ListSavedAliases());
@@ -345,7 +345,7 @@ namespace SpawnMod {
 
             // add alias
             if (!args[1].ParseEnum(out ItemID itemId)) {
-                LogMessage(string.Format("ItemId `{0}` does not exist, refer to \"spawn help\"", args[1]));
+                LogMessage($"ItemId `{args[1]}` does not exist, refer to \"spawn help\"");
                 return;
             }
 

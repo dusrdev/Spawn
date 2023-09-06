@@ -31,7 +31,7 @@ namespace SpawnMod {
         // Unlocks all the maps and locations
         public static void UnlockMaps(ArraySegment<string> args) {
             var mapTab = MapTab.Get();
-            if (mapTab == null || mapTab.m_MapDatas.Count == 0) {
+            if (mapTab == null || mapTab.m_MapDatas.Count is 0) {
                 LogMessage("{0}: Map could not be unlocked.");
                 return;
             }
@@ -53,12 +53,12 @@ namespace SpawnMod {
         // itemInfo [itemId]
         public static void LogItemInfo(ArraySegment<string> args) {
             if (args.Count < 1) {
-                LogMessage("Teleport requires additional argument: ItemID");
+                LogMessage("Teleport requires additional argument: [ItemID]");
                 return;
             }
 
             if (!args[0].ParseEnum(out ItemID itemId)) {
-                LogMessage(string.Format("ItemId `{0}` does not exist, refer to \"spawn help\"", args[0]));
+                LogMessage($"ItemId `{args[0]}` does not exist, refer to \"spawn help\"");
                 return;
             }
 
@@ -96,7 +96,7 @@ namespace SpawnMod {
             }
 
             if (!bool.TryParse(args[0], out bool progress)) {
-                LogMessage(string.Format("`{0}` is invalid boolean!", args[0]));
+                LogMessage($"`{args[0]}` is invalid boolean!");
                 return;
             }
 
@@ -121,12 +121,12 @@ namespace SpawnMod {
             }
 
             if (!int.TryParse(args[0], out int hour)) {
-                LogMessage(string.Format("Hour `{0}` is invalid!", args[0]));
+                LogMessage($"Hour `{args[0]}` is invalid!");
                 return;
             }
 
             if (!int.TryParse(args[1], out int minutes)) {
-                LogMessage(string.Format("Minutes `{0}` is invalid!", args[1]));
+                LogMessage($"Minutes `{args[1]}` is invalid!");
                 return;
             }
 
@@ -137,7 +137,7 @@ namespace SpawnMod {
 
             var level = MainLevel.Instance;
             level.SetDayTime(hour, minutes);
-            LogMessage(string.Format("Added {0} hours to the current time!", hour));
+            LogMessage($"Added {hour} hours to the current time!");
         }
 
         // Increases the skills of the player
@@ -149,7 +149,7 @@ namespace SpawnMod {
             }
 
             if (!int.TryParse(args[0], out int amount)) {
-                LogMessage(string.Format("'{0}' is invalid for argument 'amount'", args[0]));
+                LogMessage($"'{args[0]}' is invalid for argument 'amount'");
                 return;
             }
 
@@ -165,7 +165,7 @@ namespace SpawnMod {
                 skill.m_Value = Mathf.Clamp(skill.m_Value + amount, minSkillValue, maxSkillValue);
             }
 
-            LogMessage(string.Format("Skills increased by {0}!", amount));
+            LogMessage($"Skills increased by {amount}!");
         }
 
         // FillLiquid [LiquidType] [Capacity(Optional)]
@@ -176,7 +176,7 @@ namespace SpawnMod {
             }
 
             if (!args[0].ParseEnum(out LiquidType liquidType)) {
-                LogMessage(string.Format("LiquidType `{0}` does not exist, refer to \"spawn help\"", args[0]));
+                LogMessage($"LiquidType `{args[0]}` does not exist, refer to \"spawn help\"");
                 return;
             }
 
@@ -186,7 +186,7 @@ namespace SpawnMod {
                 if (float.TryParse(args[1], out capacity)) {
                     capacityModified = true;
                 } else {
-                    LogMessage(string.Format("Capacity `{0}` is invalid!", args[1]));
+                    LogMessage($"Capacity `{args[1]}` is invalid!");
                     return;
                 }
             }
@@ -206,7 +206,7 @@ namespace SpawnMod {
                 info.m_Amount = info.m_Capacity;
             }
 
-            LogMessage(string.Format("Filled liquid containers with '{0}'", liquidType));
+            LogMessage($"Filled liquid containers with '{liquidType}'");
         }
 
         public static void EndlessFires(ArraySegment<string> args) {
@@ -250,12 +250,12 @@ namespace SpawnMod {
                 return;
             }
             if (!bool.TryParse(args[0], out bool lighter)) {
-                LogMessage(string.Format("`{0}` is invalid boolean!", args[0]));
+                LogMessage($"`{args[0]}` is invalid boolean!");
                 return;
             }
             int lighterVal = Convert.ToInt32(lighter);
             if (PlayerPrefs.HasKey(LighterBackpackKey) && PlayerPrefs.GetInt(LighterBackpackKey) == lighterVal) {
-                LogMessage(string.Format("Lighter backpack is already set to {0}!", lighter));
+                LogMessage($"Lighter backpack is already set to {lighter}!");
                 return;
             }
             if (!lighter) {

@@ -22,7 +22,6 @@
 * Codebase restructured to allow better maintainability and make it easier to add functionality.
 * New Command `LighterBackpack [true/false]` - this command will set the max backpack weight to 999, if you specify [true/false] the setting will be remember and re-activate automatically upon loading the mod. If not it will be turned on manually.
 * Changed Command `RestoreSpecialItems [true/false]` - like the previous command, now [true/false] parameter can be used to save the state and it will be automatically turned on once the mod is loaded.
-* New Command `FixAudioBug (true=optional)` - This will attempt to fix a common issue with audio files being unplayable and causing terrible fps drops. Using the parameter `true` will set up a background task that will run the fix every 10 seconds until the mod is unloaded.
 
 ## NOTES
 

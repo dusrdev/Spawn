@@ -65,15 +65,15 @@ public class Spawn : Mod {
             File.AppendAllText(path, "ItemIds:\n\n");
             var itemIds = Enum.GetNames(typeof(ItemID));
             File.AppendAllLines(path, itemIds);
-            LogMessage(string.Format("help exported to: {0}", path));
+            LogMessage($"help exported to: {path}");
         } catch (Exception e) {
-            LogMessage(string.Format("Error while exporting item ids: `{0}`\nStackTrace: {1}", e.Message, e.StackTrace));
+            LogMessage($"Error while exporting item ids: `{e.Message}`\nStackTrace: {e.StackTrace}");
         }
     }
 
     [ConsoleCommand("spawn", "Check help for more info")]
     public static void Command(string[] args) {
-        if (args.Length == 0) {
+        if (args.Length is 0) {
             LogMessage("Spawn command received no arguments...");
             return;
         }
@@ -92,7 +92,7 @@ public class Spawn : Mod {
                 }
                 action(segment);
             } catch (Exception e) {
-                LogMessage(string.Format("Error while executing command: `{0}`\nStackTrace: {1}", e.Message, e.StackTrace));
+                LogMessage($"Error while executing command: `{e.Message}`\nStackTrace: {e.StackTrace}");
             }
             return;
         }

@@ -8,6 +8,7 @@
 * **spawn UnlockNotepad** - this will unlock the whole notepad (crafting, recipes, info...)
 * **spawn UnlockMaps** - gives the player all available maps and unlocks all locations
 * **spawn EndlessFires** - this will toggle on/off for all the fires within distance=5 to be endless (if they are burning)
+* **spawn FillLiquid [liquidType] [capacity]** - this will fill all the containers in the backpack with the [liquidType] and the [capacity] you want. if you don't specify [capacity] each container will be filled to the its capacity, [capacity] can also be larger then the container just make sure to account for liquid weight. a list of [liquidType] was added to the help text. Use `help` command to get the updated help text.
 * **spawn SetTime [Hour] [Minutes]** - This will set the clock to the desired time [24 hour format]
 * **spawn ProgressTime [true/false]** - This will start or stop time progression
 * **spawn SaveLocation list** - this will list the saved locations and their coordinates
@@ -26,7 +27,8 @@
 * **spawn Remove [id/alias] [maxDistance/debug]** - this will remove the item by id or alias, maxDistance will be defaulted to 5 if left out, if instead you ask for "debug", it will log all items at all distances and location but not remove them.
 * **spawn RemoveConstructions [maxDistance]** - this removes all constructions placed within the distance.
 * **spawn CompleteConstructions** - this will complete all started constructions.
-* **spawn RestoreSpecialItems** - this will attempt to restore the properties of the special items it can find in the backpack, Other items with the same id will also be granted the same properties. So either use other items for regular things, or spawn and destroy the special items according to usage.
+* **spawn RestoreSpecialItems [true/false]** - this will attempt to restore the properties of the special items it can find in the backpack, Other items with the same id will also be granted the same properties. So either use other items for regular things, or spawn and destroy the special items according to usage. Specifying `true` will make the mod remember the setting and load it automatically. Setting it to `false` will make the mod forget.
+* **spawn LighterBackpack [true/false]** - this will make the backpack maximum weight 999, same as last command, specifying `true/false` will make the mod `remember/forget`.
 
 ### Special Items
 

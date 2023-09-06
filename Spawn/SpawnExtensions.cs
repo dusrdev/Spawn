@@ -49,7 +49,7 @@ namespace SpawnMod
 		{
 			_logToDesktop = !_logToDesktop;
 			PlayerPrefs.SetInt(_logToggleKey, Convert.ToInt32(_logToDesktop));
-			LogMessage(string.Format("Log to desktop: {0}", _logToDesktop));
+			LogMessage($"Log to desktop: {_logToDesktop}");
 		}
 
 		public static void LogMessage(string message)
