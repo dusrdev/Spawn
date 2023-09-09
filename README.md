@@ -49,3 +49,7 @@
 #### Others
 
 * `SuperPills` - this is a modified version of Painkillers, it will fill all of your stats, cure insomnia, fever, and venom/poison.
+
+## NOTES
+
+To submit bug reports and or feature requests, find me on the GreenHellMods [discord](https://greenhellmodding.com/discord) server, or contact me on [telegram](https://t.me/dsr47)
