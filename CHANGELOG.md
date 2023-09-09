@@ -17,7 +17,8 @@
   * If `maxDistance` is not specified it will default to 10.
 * New Command - `EndlessFires`
   * This command is a toggle
-  * All fires within the distance of 5 will be ignited and endless (require no fuel and can't be distinguished). Calling the command again will restore the normal mode for these fires. **THIS DOESN'T LAST TO NEXT LOAD, UPON LOADING THE SAVE THE FIRE WILL BE BURNT OUT, TO PREVENT THIS TOGGLE IT OFF BEFORE SAVING AND REUSE THE COMMAND UPON LOADING**
+  * All fires within the distance of 5 will be ignited and endless (require no fuel and can't be distinguished). Calling the command again will extinguish and restore those fires to normal.
+  * Upon saving, if any firecamp was turned to "endless" it will extinguished to preserve its construction. **FOR THIS TO HAPPEN MAKE SURE THE MOD IS STILL LOADED WHILE SAVING**.
 * New Command - `UnlockMaps` - this command will give the player all available maps and unlock all the locations on them.
 * Codebase restructured to allow better maintainability and make it easier to add functionality.
 * New Command `LighterBackpack [true/false]` - this command will set the max backpack weight to 999, if you specify [true/false] the setting will be remember and re-activate automatically upon loading the mod. If not it will be turned on manually.

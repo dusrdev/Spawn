@@ -7,7 +7,7 @@
 * **spawn GetUnityLogPath** - this will log the path to the unity log (useful for troubleshooting)
 * **spawn UnlockNotepad** - this will unlock the whole notepad (crafting, recipes, info...)
 * **spawn UnlockMaps** - gives the player all available maps and unlocks all locations
-* **spawn EndlessFires** - this will toggle on/off for all the fires within distance=5 to be endless (if they are burning)
+* **spawn EndlessFires** - this will toggle on/off for all the fires within distance=5 to be endless (and will light them if they aren't burning)
 * **spawn FillLiquid [liquidType] [capacity]** - this will fill all the containers in the backpack with the [liquidType] and the [capacity] you want. if you don't specify [capacity] each container will be filled to the its capacity, [capacity] can also be larger then the container just make sure to account for liquid weight. a list of [liquidType] was added to the help text. Use `help` command to get the updated help text.
 * **spawn SetTime [Hour] [Minutes]** - This will set the clock to the desired time [24 hour format]
 * **spawn ProgressTime [true/false]** - This will start or stop time progression

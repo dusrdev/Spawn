@@ -6,6 +6,8 @@ using System.Text;
 
 using Enums;
 
+using HarmonyLib;
+
 using SpawnMod;
 
 using UnityEngine;
@@ -13,6 +15,10 @@ using UnityEngine;
 using static SpawnMod.SpawnExtensions;
 
 public class Spawn : Mod {
+    public static volatile int LoadCounter = 0;
+    private const string HarmonyId = "dusrdev.spawn";
+    private static Harmony s_harmony;
+
     private static string GetHelpText() {
         var sb = new StringBuilder();
         sb.AppendLine("Commands:");
@@ -34,23 +40,26 @@ public class Spawn : Mod {
     private Coroutine _inventoryCoroutine;
 
     private IEnumerator InventoryCoroutine() {
-        bool inventoryLoaded = false;
+        int executionCount = 0;
         while (true) {
-            if (InventoryBackpack.Get() == null) {
-                inventoryLoaded = false;
-            } else if (!inventoryLoaded) {
-                inventoryLoaded = true;
+            if (InventoryBackpack.Get() != null && executionCount != LoadCounter) {
                 foreach (var action in _inventoryActions) {
                     action();
                 }
+                executionCount = LoadCounter;
             }
             yield return new WaitForSeconds(10f);
         }
     }
 
     public void Start() {
-        LogMessage("Mod Spawn has been loaded!");
+        if (Player.Get() != null) {
+            LoadCounter = 1;
+        }
+        s_harmony = new Harmony(HarmonyId);
+        s_harmony.PatchAll();
         RestoreLogToggle();
+        LogMessage("Mod Spawn has been loaded!");
         _inventoryCoroutine = StartCoroutine(InventoryCoroutine());
     }
 
@@ -107,8 +116,7 @@ public class Spawn : Mod {
         LogMessage("Mod Spawn has been unloaded!");
     }
 
-    private static readonly Dictionary<string, Action<ArraySegment<string>>> Commands = new Dictionary<string, Action<ArraySegment<string>>>(StringComparer.OrdinalIgnoreCase)
- {
+    private static readonly Dictionary<string, Action<ArraySegment<string>>> Commands = new Dictionary<string, Action<ArraySegment<string>>>(StringComparer.OrdinalIgnoreCase) {
         { "Alias", SpawnAndRemove.AddItemAlias },
         { "CompleteConstructions", SpecialCommands.CompleteConstructions },
         { "EndlessFires", SpecialCommands.EndlessFires },
@@ -130,5 +138,33 @@ public class Spawn : Mod {
         { "ToggleLog", ToggleLogToDesktop },
         { "UnlockMaps", SpecialCommands.UnlockMaps },
         { "UnlockNotepad", SpecialCommands.UnlockNotepad },
- };
+    };
+}
+
+[HarmonyPatch(typeof(MainLevel), "Save", new Type[] { })]
+public sealed class EndlessFiresSaveFix {
+    [HarmonyPrefix]
+    static bool Save() {
+        int count = 0;
+        foreach (var firecamp in Firecamp.s_Firecamps) {
+            if (firecamp?.m_EndlessFire != true) {
+                continue;
+            }
+            firecamp.Extinguish();
+            firecamp.m_EndlessFire = false;
+            count++;
+        }
+        if (count > 0) {
+            LogMessage($"Extinguished {count} endless fires to prevent the game from removing them.");
+        }
+        return true;
+    }
+}
+
+[HarmonyPatch(typeof(MainLevel), "Load", new Type[] { })]
+public sealed class LoadCounter {
+    [HarmonyPostfix]
+    static void Load() {
+        Spawn.LoadCounter++;
+    }
 }

@@ -103,15 +103,15 @@ namespace SpawnMod {
 
             var sb = new StringBuilder();
             sb.Append("ItemID: ")
-              .AppendLine(itemId.ToString())
-              .Append("MaxDistance: ")
-              .AppendLine(maxDistance.ToString())
-              .Append("Debug: ")
-              .AppendLine(debug.ToString())
-              .AppendLine()
-              .Append("PlayerPosition: ")
-              .AppendLine(playerPosition.ToString())
-              .AppendLine();
+                .AppendLine(itemId.ToString())
+                .Append("MaxDistance: ")
+                .AppendLine(maxDistance.ToString())
+                .Append("Debug: ")
+                .AppendLine(debug.ToString())
+                .AppendLine()
+                .Append("PlayerPosition: ")
+                .AppendLine(playerPosition.ToString())
+                .AppendLine();
 
             var items = new Dictionary<int, Item>();
             int index = 1;
@@ -126,9 +126,9 @@ namespace SpawnMod {
 
                 if (debug) {
                     sb.Append("ItemPosition: ")
-                      .AppendLine(itemPosition.ToString())
-                      .Append("Distance: ")
-                      .AppendLine(distance.ToString());
+                        .AppendLine(itemPosition.ToString())
+                        .Append("Distance: ")
+                        .AppendLine(distance.ToString());
                 }
 
                 if (distance > maxDistance) {
@@ -232,25 +232,37 @@ namespace SpawnMod {
             }
 
             var backpack = InventoryBackpack.Get();
+            int count = 0;
 
             foreach (var item in backpack.m_Items) {
                 var itemInfo = item.m_Info;
-                TryRestoreSpecialItemProperties(itemInfo);
+                if (TryRestoreSpecialItemProperties(itemInfo)) {
+                    count++;
+                }
             }
-            TryRestoreSpecialItemProperties(backpack.m_EquippedItem.m_Info);
+            if (TryRestoreSpecialItemProperties(backpack.m_EquippedItem.m_Info)) {
+                count++;
+            }
+
+            if (count > 0) {
+                LogMessage($"Restored {count} special items!");
+                return;
+            }
+
+            LogMessage("No special items found!");
         }
 
-        private static void TryRestoreSpecialItemProperties(ItemInfo itemInfo) {
+        private static bool TryRestoreSpecialItemProperties(ItemInfo itemInfo) {
             if (!SpecialItemIds.Contains(itemInfo.m_ID)) { // Regular item
-                return;
+                return false;
             }
             var type = itemInfo.GetType();
-            LogMessage($"Restoring `{itemInfo.m_ID}`");
             if (itemInfo.m_ID == ItemID.Stone) {
                 ModifyItemProperties(type, itemInfo, false);
-                return;
+                return true;
             }
             ModifyItemProperties(type, itemInfo);
+            return true;
         }
 
         // Modifies weapons - Infinite Damage and Durability
@@ -352,18 +364,8 @@ namespace SpawnMod {
             LogMessage(ItemAliasManager.AddAlias(args[0], itemId));
         }
 
-        private static readonly Dictionary<string, Action> SpecialItemMap = new Dictionary<string, Action>(StringComparer.OrdinalIgnoreCase)
-         {
-        { "Stormbreaker", () => SpawnItemAndModify<WeaponInfo>(ItemID.metal_axe) },
-        { "Knife", () => SpawnItemAndModify<WeaponInfo>(ItemID.metal_blade_weapon) },
-        { "FirstBlade", () => SpawnItemAndModify<WeaponInfo>(ItemID.Obsidian_Bone_Blade) },
-        { "LucifersSpear", () => SpawnItemAndModify<WeaponInfo>(ItemID.Obsidian_Spear) },
-        { "SuperBidon", () => SpawnItemAndModify<LiquidContainerInfo>(ItemID.Bidon) },
-        { "SuperPot", () => SpawnItemAndModify<BowlInfo>(ItemID.Pot) },
-        { "MagicPills", () => SpawnItemAndModify<FoodInfo>(ItemID.Painkillers) },
-        { "Kryptonite", () => SpawnItemAndModify<ItemInfo>(ItemID.Stone, false) },
-        { "Lighter", () => SpawnItemAndModify<ItemToolInfo>(ItemID.Rubing_Wood) },
-    };
+        private static readonly Dictionary<string, Action> SpecialItemMap = new Dictionary<string, Action>(StringComparer.OrdinalIgnoreCase) { { "Stormbreaker", () => SpawnItemAndModify<WeaponInfo> (ItemID.metal_axe) }, { "Knife", () => SpawnItemAndModify<WeaponInfo> (ItemID.metal_blade_weapon) }, { "FirstBlade", () => SpawnItemAndModify<WeaponInfo> (ItemID.Obsidian_Bone_Blade) }, { "LucifersSpear", () => SpawnItemAndModify<WeaponInfo> (ItemID.Obsidian_Spear) }, { "SuperBidon", () => SpawnItemAndModify<LiquidContainerInfo> (ItemID.Bidon) }, { "SuperPot", () => SpawnItemAndModify<BowlInfo> (ItemID.Pot) }, { "MagicPills", () => SpawnItemAndModify<FoodInfo> (ItemID.Painkillers) }, { "Kryptonite", () => SpawnItemAndModify<ItemInfo> (ItemID.Stone, false) }, { "Lighter", () => SpawnItemAndModify<ItemToolInfo> (ItemID.Rubing_Wood) },
+        };
 
         public static string GetSpecialItemNames() {
             var sb = new StringBuilder();
@@ -374,15 +376,15 @@ namespace SpawnMod {
         }
 
         public static readonly HashSet<ItemID> SpecialItemIds = new HashSet<ItemID> {
-        ItemID.metal_axe,
-        ItemID.metal_blade_weapon,
-        ItemID.Obsidian_Bone_Blade,
-        ItemID.Obsidian_Spear,
-        ItemID.Bidon,
-        ItemID.Pot,
-        ItemID.Painkillers,
-        ItemID.Stone,
-        ItemID.Rubing_Wood,
-    };
+            ItemID.metal_axe,
+            ItemID.metal_blade_weapon,
+            ItemID.Obsidian_Bone_Blade,
+            ItemID.Obsidian_Spear,
+            ItemID.Bidon,
+            ItemID.Pot,
+            ItemID.Painkillers,
+            ItemID.Stone,
+            ItemID.Rubing_Wood,
+        };
     }
 }
