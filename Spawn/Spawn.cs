@@ -32,7 +32,7 @@ public class Spawn : Mod {
         return sb.ToString();
     }
 
-    private readonly Action[] _inventoryActions = new Action[] {
+    private static readonly Action[] InventoryActions = new Action[] {
         SpawnAndRemove.RestoreSpecialItemsFromMemory,
         SpecialCommands.RestoreLighterBackpack,
     };
@@ -43,7 +43,7 @@ public class Spawn : Mod {
         int executionCount = 0;
         while (true) {
             if (InventoryBackpack.Get() != null && executionCount != LoadCounter) {
-                foreach (var action in _inventoryActions) {
+                foreach (var action in InventoryActions) {
                     action();
                 }
                 executionCount = LoadCounter;
@@ -67,13 +67,21 @@ public class Spawn : Mod {
     private static void ExportHelpText(ArraySegment<string> args) {
         try {
             var path = Path.Combine(DesktopPath, "SpawnHelp.txt");
-            File.WriteAllText(path, GetHelpText());
-            File.AppendAllText(path, "LiquidTypes:\n\n");
-            var liquidTypes = Enum.GetNames(typeof(LiquidType));
-            File.AppendAllLines(path, liquidTypes);
-            File.AppendAllText(path, "ItemIds:\n\n");
-            var itemIds = Enum.GetNames(typeof(ItemID));
-            File.AppendAllLines(path, itemIds);
+            using (var file = File.Open(path, FileMode.Create)) {
+                using (var writer = new StreamWriter(file)) {
+                    writer.WriteLine(GetHelpText());
+                    writer.WriteLine("LiquidTypes:\n\n");
+                    foreach (var liquid in Enum.GetNames(typeof(LiquidType))) {
+                        writer.WriteLine(liquid);
+                    }
+                    writer.WriteLine("ItemIds:\n\n");
+                    foreach (var item in Enum.GetNames(typeof(ItemID))) {
+                        writer.WriteLine(item);
+                    }
+                    writer.WriteLine("LiquidTypes:\n\n");
+                    writer.WriteLine("LiquidTypes:\n\n");
+                }
+            }
             LogMessage($"help exported to: {path}");
         } catch (Exception e) {
             LogMessage($"Error while exporting item ids: `{e.Message}`\nStackTrace: {e.StackTrace}");

@@ -10,5 +10,6 @@
 		"Mathf",
 		"Prefs",
 		"Rubing"
-	]
+	],
+	"dotnet.preferCSharpExtension": true
 }

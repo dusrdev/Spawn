@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+// using System.Linq;
 using System.Text;
 
 using Enums;
@@ -232,15 +233,26 @@ namespace SpawnMod {
             }
 
             var backpack = InventoryBackpack.Get();
+
+            if (backpack == null) {
+                LogMessage("Backpack not found!");
+                return;
+            }
+
+            if (backpack.m_Items.Count is 0) {
+                LogMessage("Backpack is empty!");
+                return;
+            }
+
             int count = 0;
 
             foreach (var item in backpack.m_Items) {
                 var itemInfo = item.m_Info;
-                if (TryRestoreSpecialItemProperties(itemInfo)) {
+                if (itemInfo != null && TryRestoreSpecialItemProperties(itemInfo)) {
                     count++;
                 }
             }
-            if (TryRestoreSpecialItemProperties(backpack.m_EquippedItem.m_Info)) {
+            if (backpack.m_EquippedItem.m_Info != null && TryRestoreSpecialItemProperties(backpack.m_EquippedItem.m_Info)) {
                 count++;
             }
 
